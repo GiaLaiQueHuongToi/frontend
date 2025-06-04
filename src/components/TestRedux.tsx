@@ -4,7 +4,7 @@ import type { RootState } from "@/store/store";
 import { useSelector, useDispatch } from "react-redux";
 import { increment, decrement, reset } from "@/store/features/CounterSlice";
 
-const Page = () => {
+const TestRedux = () => {
     const count = useSelector((state: RootState) => state.counter.value);
     const dispatch = useDispatch();
 
@@ -19,4 +19,4 @@ const Page = () => {
     );
 };
 
-export default Page;
+export default TestRedux;
