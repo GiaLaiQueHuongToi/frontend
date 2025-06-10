@@ -1,6 +1,6 @@
 'use client';
 
-import CounterSlice from "./features/CounterSlice";
+import CounterSlice from "./slice/CounterSlice";
 
 import { configureStore } from "@reduxjs/toolkit";
 
