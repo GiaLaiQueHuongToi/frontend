@@ -165,7 +165,7 @@ export default function CreateVideoPage() {
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="trending" id="trending" />
                   <Label htmlFor="trending" className="cursor-pointer">
-                    Use AI-suggested trending topics
+                    Use AI-generated content
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
