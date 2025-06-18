@@ -8,6 +8,20 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: [
+      'image.pollinations.ai',
+      'via.placeholder.com',
+      'source.unsplash.com',
+      'images.pexels.com',
+      'placeholder.com',
+      'picsum.photos'
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
 }
 
