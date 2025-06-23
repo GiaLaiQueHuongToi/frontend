@@ -1,8 +1,8 @@
 'use client';
 
-import CounterSlice from "./slice/CounterSlice";
+import CounterSlice from './slice/CounterSlice';
 
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore } from '@reduxjs/toolkit';
 
 export const store = configureStore({
     reducer: {

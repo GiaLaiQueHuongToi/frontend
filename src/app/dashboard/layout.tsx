@@ -1,15 +1,15 @@
-import type React from "react"
-import { DashboardNav } from "@/components/dashboard-nav"
+import type React from 'react';
+import { DashboardNav } from '@/components/dashboard-nav';
 
 export default function DashboardLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode
+    children: React.ReactNode;
 }) {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <DashboardNav />
-      <main className="flex-1 bg-gray-50">{children}</main>
-    </div>
-  )
+    return (
+        <div className='min-h-screen flex flex-col'>
+            <DashboardNav />
+            <main className='flex-1 bg-gray-50'>{children}</main>
+        </div>
+    );
 }
