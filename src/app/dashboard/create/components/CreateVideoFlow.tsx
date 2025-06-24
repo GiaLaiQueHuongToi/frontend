@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -23,14 +23,21 @@ import { AudienceGoalsStep } from './AudienceGoalsStep';
 import { ContentScriptStep } from './ContentScriptStep';
 import { VideoStyleStep } from './VideoStyleStep';
 import { ImageGenerationSection } from '@/components/video-creation/ImageGenerationSection';
-import { VoiceCaptionsStep } from './VoiceCaptionsStep';
-import { VideoEditingStep } from './VideoEditingStep';
+import { VoiceGenerationStep } from './VoiceGenerationStep';
+import { VideoGenerationStep } from './VideoGenerationStep';
 import { PreviewFinalizeStep } from './PreviewFinalizeStep';
+import type { GeneratedSegment } from '@/types/video-creation';
 
 export function CreateVideoFlow() {
     const videoCreation = useVideoCreation();
-            const scriptGeneration = useScriptGeneration();
+    const scriptGeneration = useScriptGeneration();
     const imageGeneration = useImageGeneration();
+
+    // Segments state for passing between steps 6 and 7
+    const [segments, setSegments] = useState<GeneratedSegment[]>([]);
+
+    // Video generation status for step 7 validation
+    const [hasGeneratedVideo, setHasGeneratedVideo] = useState(false);
 
     // Destructure state for easier access
     const {
@@ -63,6 +70,13 @@ export function CreateVideoFlow() {
         scriptGeneration.videoOutline,
         imageGeneration.isGeneratingImages,
     ]);
+
+    // Reset video generation status when navigating away from step 7
+    useEffect(() => {
+        if (currentStep !== 7) {
+            setHasGeneratedVideo(false);
+        }
+    }, [currentStep]);
 
     const renderStepContent = () => {
         switch (currentStep) {
@@ -187,14 +201,23 @@ export function CreateVideoFlow() {
 
             case 6:
                 return (
-                    <VoiceCaptionsStep
+                    <VoiceGenerationStep
+                        imageState={imageGeneration}
                         state={videoCreation}
                         onUpdateState={updateState}
+                        onSegmentsChange={setSegments}
+                        initialSegments={segments}
                     />
                 );
 
             case 7:
-                return <VideoEditingStep onFinish={handleNextStep} />;
+                return (
+                    <VideoGenerationStep
+                        onFinish={handleNextStep}
+                        segments={segments}
+                        onVideoGenerated={setHasGeneratedVideo}
+                    />
+                );
 
             case 8:
                 return (
@@ -225,7 +248,7 @@ export function CreateVideoFlow() {
             case 6:
                 return 'Voice & Captions';
             case 7:
-                return 'Video Editing';
+                return 'Video Generation';
             case 8:
                 return 'Preview & Finalize';
             default:
@@ -248,7 +271,7 @@ export function CreateVideoFlow() {
             case 6:
                 return 'Configure voice and caption settings';
             case 7:
-                return 'Edit your video with professional tools';
+                return 'Generate your final video from segments';
             case 8:
                 return 'Preview your video and make final adjustments';
             default:
@@ -272,9 +295,11 @@ export function CreateVideoFlow() {
             case 5:
                 return true; // Image generation is optional
             case 6:
-                return !!language;
+                // Require at least one segment with audio to proceed
+                return !!language && segments.length > 0 && segments.some(s => s.audioUrl);
             case 7:
-                return true; // Editing is optional
+                // Require video to be generated to proceed
+                return hasGeneratedVideo;
             case 8:
                 return true; // Final step
             default:

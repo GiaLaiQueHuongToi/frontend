@@ -25,6 +25,7 @@ export interface VideoCreationState {
     videoStyle: string;
     language: string;
     voiceType: string;
+    emotion: string;
     captionStyle: string;
     isGenerating: boolean;
     isPreviewReady: boolean;
@@ -55,4 +56,12 @@ export interface TrendingTopic {
     title: string;
     category: string;
     trending: boolean;
+}
+
+export interface GeneratedSegment {
+    segmentId: number;
+    imageUrl: string;
+    scriptText: string;
+    audioUrl?: string;
+    duration?: number;
 }

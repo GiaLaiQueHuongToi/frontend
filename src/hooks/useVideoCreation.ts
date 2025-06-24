@@ -21,6 +21,7 @@ export function useVideoCreation() {
         videoStyle: '',
         language: 'vietnamese',
         voiceType: 'female',
+        emotion: 'neutral',
         captionStyle: 'modern',
         isGenerating: false,
         isPreviewReady: false,
