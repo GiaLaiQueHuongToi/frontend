@@ -40,7 +40,16 @@ export interface ImageGenerationResult {
     height: number;
 }
 
-// Helper function to generate images using multiple reliable sources
+// Helper function to clean script text by removing unwanted patterns
+function cleanScriptText(text: string): string {
+    return text
+        // Remove patterns like [0-8], [1-5], etc.
+        .replace(/\[\d+-?\d*\]/g, '')
+        // Remove extra whitespace
+        .replace(/\s+/g, ' ')
+        // Trim leading and trailing spaces
+        .trim();
+}
 async function generateImageWithGemini(
     prompt: string,
     segmentId: number,
@@ -242,42 +251,44 @@ export const geminiService = {
             });
 
             const prompt = `
-You are an expert short-form video content creator and scriptwriter. Based on the following information, generate a complete and engaging script breakdown for approximately 60-second video.
+                You are an expert short-form video content creator and scriptwriter. Based on the following information, generate a complete and engaging script breakdown for approximately 60-second video.
 
-**Video Description:** ${request.description}
-**Target Audience:** ${request.targetAudience}
-**Video Goal:** ${request.videoGoal}
+                **Video Description:** ${request.description}
+                **Target Audience:** ${request.targetAudience}
+                **Video Goal:** ${request.videoGoal}
 
-Return your response in the following JSON format:
+                Return your response in the following JSON format:
 
-{
-  "contentSummary": "A concise 4-5 sentence summary of the video content and its key message.",
-  "scriptSegments": [
-    {
-      "id": 1,
-      "text": "Short, clear sentence suitable for on-screen caption.",
-      "start": 0,
-      "end": 5
-    }
-  ],
-  "estimatedDuration": 60, // Total video duration in seconds
-  "keywords": ["keyword1", "keyword2", "keyword3"]
-}
+                {
+                "contentSummary": "A concise 4-5 sentence summary of the video content and its key message.",
+                "scriptSegments": [
+                    {
+                    "id": 1,
+                    "text": "Concise, engaging content that delivers key information in 15-25 words clearly and effectively.",
+                    "start": 0,
+                    "end": 10
+                    }
+                ],
+                "estimatedDuration": 60, // Total video duration in seconds
+                "keywords": ["keyword1", "keyword2", "keyword3"]
+                }
 
 
-Guidelines:
-- The total video duration must be approximately 60 seconds.
-- Divide the script into short segments (10–15 total), each lasting 4–6 seconds.
-- Each scriptSegment must include:
-  + A short, engaging sentence that fits comfortably on screen as a caption.
-  + Accurate start and end times in seconds.
-- Begin with a hook to grab attention immediately.
-- End with a clear and compelling call-to-action.
-- Make the content highly relevant, engaging, and easy to read for the target audience.
-- Ensure the messaging aligns closely with the stated video goal.
-- Add relevant SEO keywords to increase discoverability.
-- Return only the JSON — no explanations, comments, or extra formatting.
-`;
+                Guidelines:
+                - The total video duration must be approximately 60 seconds.
+                - Divide the script into 6-8 segments total, each lasting 8-12 seconds.
+                - Create a cohesive narrative flow where each segment connects smoothly to the next, forming a complete story arc.
+                - Each scriptSegment must include:
+                + A concise but informative sentence (15-25 words) that delivers key message clearly.
+                + Accurate start and end times in seconds.
+                + Content that flows naturally from the previous segment and leads into the next.
+                - Structure the narrative with: Hook → Problem/Context → Solution/Main Content → Benefits → Call-to-Action.
+                - Ensure smooth transitions between segments using connecting words or phrases.
+                - Make the content highly relevant, engaging, and easy to read for the target audience.
+                - Each segment should build upon the previous one, creating a compelling story progression.
+                - Add relevant SEO keywords to increase discoverability.
+                - Return only the JSON — no explanations, comments, or extra formatting.
+                `;
 
             const result = await model.generateContent(prompt);
             const response = await result.response;
@@ -294,6 +305,14 @@ Guidelines:
                     jsonMatch[0]
                 );
 
+                // Clean script text from all segments to remove unwanted patterns like [0-8]
+                if (parsedResponse.scriptSegments) {
+                    parsedResponse.scriptSegments = parsedResponse.scriptSegments.map(segment => ({
+                        ...segment,
+                        text: cleanScriptText(segment.text)
+                    }));
+                }
+
                 // Validate the response structure
                 if (
                     !parsedResponse.contentSummary ||
@@ -308,34 +327,39 @@ Guidelines:
                 console.error('Failed to parse Gemini response:', parseError);
 
                 // Fallback response if JSON parsing fails
+                const fallbackSegments = [
+                    {
+                        id: 1,
+                        text: 'Attention-grabbing hook that introduces the main topic and creates curiosity about what comes next.',
+                        start: 0,
+                        end: 12,
+                    },
+                    {
+                        id: 2,
+                        text: 'But here\'s the challenge most people face - establishing the problem that needs solving.',
+                        start: 12,
+                        end: 36,
+                    },
+                    {
+                        id: 3,
+                        text: 'That\'s exactly why this solution works - presenting the main content with clear benefits.',
+                        start: 36,
+                        end: 48,
+                    },
+                    {
+                        id: 4,
+                        text: 'So what does this mean for you? Take action now and see results immediately.',
+                        start: 48,
+                        end: 60,
+                    },
+                ];
+
                 return {
                     contentSummary: `This video explores ${request.description} targeting ${request.targetAudience} with the goal to ${request.videoGoal}.`,
-                    scriptSegments: [
-                        {
-                            id: 1,
-                            text: 'Hook the audience with an engaging opening that introduces the main topic.',
-                            start: 0,
-                            end: 5,
-                        },
-                        {
-                            id: 2,
-                            text: 'Present the core information or message of the video with clear explanations.',
-                            start: 5,
-                            end: 35,
-                        },
-                        {
-                            id: 3,
-                            text: 'Highlight the most important takeaways or benefits for the audience.',
-                            start: 35,
-                            end: 55,
-                        },
-                        {
-                            id: 4,
-                            text: 'End with a clear call to action encouraging engagement or next steps.',
-                            start: 55,
-                            end: 60,
-                        },
-                    ],
+                    scriptSegments: fallbackSegments.map(segment => ({
+                        ...segment,
+                        text: cleanScriptText(segment.text)
+                    })),
                     estimatedDuration: 60,
                     keywords: ['video', 'content', 'audience'],
                 };
@@ -359,39 +383,40 @@ Guidelines:
             });
 
             const prompt = `
-Generate a script for approximately ${duration}-second video about "${topic}" for ${audience}.
-Please return the script as a JSON object with the following structure:
+                Generate a script for approximately ${duration}-second video about "${topic}" for ${audience}.
+                Please return the script as a JSON object with the following structure:
 
-{
-  "contentSummary": "",
-  "scriptSegments": [
-    {
-      "id": 1,
-      "text": "Short, clear sentence suitable for on-screen caption.",
-      "start": 0,
-      "end": 5
-    },
-    {
-      "id": 2,
-      "text": "Another engaging segment of the script.",
-      "start": 5,
-      "end": 10
-    }
-  ],
-  "estimatedDuration": ${duration}, // Total video duration in seconds
-  "keywords": ["keyword1", "keyword2", "keyword3"]
-}
+                {
+                "contentSummary": "",
+                "scriptSegments": [
+                    {
+                    "id": 1,
+                    "text": "Concise, engaging content that delivers key information in 15-25 words clearly and effectively.",
+                    "start": 0,
+                    "end": 10
+                    },
+                    {
+                    "id": 2,
+                    "text": "Brief yet informative segment that explores the main content with clear, focused explanations.",
+                    "start": 10,
+                    "end": 20
+                    }
+                ],
+                "estimatedDuration": ${duration}, // Total video duration in seconds
+                "keywords": ["keyword1", "keyword2", "keyword3"]
+                }
 
-Guidelines:
-- Divide the script into 10–15 segments depending on the total duration (each segment should last roughly 4–6 seconds when spoken).
-- Make the tone conversational, engaging, and natural for ${audience}.
-- Start with a strong hook to grab attention immediately.
-- Include the core message and any relevant context or supporting details.
-- End with a clear and motivating call to action.
-- Each script segment (text) should be standalone, suitable for on-screen caption or spoken word.
-- The start and end times should be provided in seconds for each segment.
-- Do not include any additional formatting, explanation, or markdown—only return the final JSON response.
-`;
+                Guidelines:
+                - Divide the script into 6-8 segments depending on the total duration (each segment should last roughly 8-12 seconds when spoken).
+                - Create a cohesive storytelling flow where each segment naturally connects to build a complete narrative arc.
+                - Make the tone conversational, engaging, and natural for ${audience}.
+                - Structure the story: Hook → Context/Problem → Main Content → Benefits/Solution → Conclusion → Call-to-Action.
+                - Use transitional phrases to ensure smooth flow between segments (e.g., "But here's the thing...", "That's why...", "So what does this mean?").
+                - Each script segment (text) should be concise yet informative (15-25 words) and flow seamlessly into the next.
+                - Build momentum throughout the video, with each segment adding value to the overall story.
+                - The start and end times should be provided in seconds for each segment.
+                - Do not include any additional formatting, explanation, or markdown—only return the final JSON response.
+                `;
 
             const result = await model.generateContent(prompt);
             const response = await result.response;
@@ -408,6 +433,14 @@ Guidelines:
                     jsonMatch[0]
                 );
 
+                // Clean script text from all segments to remove unwanted patterns like [0-8]
+                if (parsedResponse.scriptSegments) {
+                    parsedResponse.scriptSegments = parsedResponse.scriptSegments.map(segment => ({
+                        ...segment,
+                        text: cleanScriptText(segment.text)
+                    }));
+                }
+
                 // Validate the response structure
                 if (
                     !parsedResponse.contentSummary ||
@@ -420,34 +453,39 @@ Guidelines:
                 return parsedResponse;
             } catch (parseError) {
                 // Fallback script if parsing fails
+                const fallbackSegments = [
+                    {
+                        id: 1,
+                        text: 'Ever wondered why this topic matters? Let me show you something that will change everything.',
+                        start: 0,
+                        end: 15,
+                    },
+                    {
+                        id: 2,
+                        text: 'But here\'s the problem most people don\'t realize - the key challenge that needs addressing.',
+                        start: 15,
+                        end: 30,
+                    },
+                    {
+                        id: 3,
+                        text: 'That\'s exactly why this approach works so well - the solution with real-world impact.',
+                        start: 30,
+                        end: 45,
+                    },
+                    {
+                        id: 4,
+                        text: 'So what\'s your next step? Start implementing this today and see the difference immediately.',
+                        start: 45,
+                        end: 60,
+                    },
+                ];
+
                 return {
                     contentSummary: `${topic}`,
-                    scriptSegments: [
-                        {
-                            id: 1,
-                            text: 'Introduction to the topic and why it matters.',
-                            start: 0,
-                            end: 5,
-                        },
-                        {
-                            id: 2,
-                            text: 'Key point 1 with supporting details.',
-                            start: 5,
-                            end: 35,
-                        },
-                        {
-                            id: 3,
-                            text: 'Key point 2 with examples and statistics.',
-                            start: 35,
-                            end: 55,
-                        },
-                        {
-                            id: 4,
-                            text: 'Conclusion and call to action.',
-                            start: 55,
-                            end: 60,
-                        },
-                    ],
+                    scriptSegments: fallbackSegments.map(segment => ({
+                        ...segment,
+                        text: cleanScriptText(segment.text)
+                    })),
                     estimatedDuration: duration,
                     keywords: ['video', 'content', 'audience'],
                 };
@@ -471,32 +509,32 @@ Guidelines:
 
             // First, generate an optimized prompt for image generation
             const promptGenerationRequest = `
-You are an expert visual content creator for short-form videos. Create a detailed, specific image generation prompt for AI image creation.
+                You are an expert visual content creator for short-form videos. Create a detailed, specific image generation prompt for AI image creation.
 
-**Script Text:** "${scriptSegment.text}"
-**Video Topic:** ${videoContext.topic}
-**Video Style:** ${videoContext.style}
-**Target Audience:** ${videoContext.targetAudience}
-**Segment Duration:** ${scriptSegment.end - scriptSegment.start} seconds
+                **Script Text:** "${scriptSegment.text}"
+                **Video Topic:** ${videoContext.topic}
+                **Video Style:** ${videoContext.style}
+                **Target Audience:** ${videoContext.targetAudience}
+                **Segment Duration:** ${scriptSegment.end - scriptSegment.start} seconds
 
-Generate a detailed prompt for creating a high-quality image that:
-1. Directly represents the script content: "${scriptSegment.text}"
-2. Matches the ${videoContext.style} visual style
-3. Appeals to ${videoContext.targetAudience}
-4. Is suitable for video content (16:9 aspect ratio)
-5. Has professional, clean composition
-6. Includes appropriate colors and mood for the topic
+                Generate a detailed prompt for creating a high-quality image that:
+                1. Directly represents the script content: "${scriptSegment.text}"
+                2. Matches the ${videoContext.style} visual style
+                3. Appeals to ${videoContext.targetAudience}
+                4. Is suitable for video content (16:9 aspect ratio)
+                5. Has professional, clean composition
+                6. Includes appropriate colors and mood for the topic
 
-Requirements:
-- Be specific about visual elements, composition, lighting
-- Include style keywords (${videoContext.style})
-- Mention colors that match the video theme
-- Specify professional quality and video-ready format
-- Keep it under 150 words
-- Focus on visual storytelling
+                Requirements:
+                - Be specific about visual elements, composition, lighting
+                - Include style keywords (${videoContext.style})
+                - Mention colors that match the video theme
+                - Specify professional quality and video-ready format
+                - Keep it under 150 words
+                - Focus on visual storytelling
 
-Return only the image generation prompt, no explanations.
-`;
+                Return only the image generation prompt, no explanations.
+                `;
 
             const promptResult = await model.generateContent(
                 promptGenerationRequest
@@ -561,7 +599,7 @@ Return only the image generation prompt, no explanations.
                     segmentId: segment.id,
                     imageUrl: imageUrl,
                     imagePrompt: imagePrompt,
-                    scriptText: segment.text,
+                    scriptText: cleanScriptText(segment.text),
                     width: 1920,
                     height: 1080,
                 };
@@ -583,7 +621,7 @@ Return only the image generation prompt, no explanations.
                     segment.id
                 ),
                 imagePrompt: `${videoContext.style} style visual for "${segment.text}"`,
-                scriptText: segment.text,
+                scriptText: cleanScriptText(segment.text),
                 width: 1920,
                 height: 1080,
             }));

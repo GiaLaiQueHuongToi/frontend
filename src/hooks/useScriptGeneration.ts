@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { geminiService } from '@/services/geminiService';
+import { geminiService } from '@/services/GeminiService';
 import type {
     ScriptGenerationState,
     VideoOutlineRequest,
