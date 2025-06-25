@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { geminiService } from '@/services/geminiService';
+import { geminiService } from '@/services/GeminiService';
 import type {
     ImageGenerationState,
     VideoOutlineResponse,
@@ -111,7 +111,8 @@ export function useImageGeneration() {
             topic: string;
             style: string;
             targetAudience: string;
-        }
+        },
+        customScriptText?: string
     ) => {
         if (!videoOutline) return;
 
@@ -126,25 +127,31 @@ export function useImageGeneration() {
                 description: `Creating new image for segment ${segmentId}...`,
             });
 
+            // Create a modified segment with custom script text if provided
+            const modifiedSegment = customScriptText
+                ? { ...segment, text: customScriptText }
+                : segment;
+
             const { imageUrl, imagePrompt } = await geminiService.generateImage(
-                segment,
+                modifiedSegment,
                 videoContext
             );
 
-            // Update only this specific image
+            // Update only this specific image, including the script text if it was customized
             setState((prev) => ({
                 ...prev,
                 generatedImages: prev.generatedImages.map((img) =>
                     img.segmentId === segmentId
                         ? {
-                              ...img,
-                              imageUrl,
-                              imagePrompt,
-                              width: 1920,
-                              height: 1080,
-                              key: `${Date.now()}-${segmentId}`, // Unique key for re-rendering
-                              delay: 0, // Reset delay for new image
-                          }
+                            ...img,
+                            imageUrl,
+                            imagePrompt,
+                            scriptText: customScriptText || img.scriptText, // Update script text if provided
+                            width: 1920,
+                            height: 1080,
+                            key: `${Date.now()}-${segmentId}`, // Unique key for re-rendering
+                            delay: 0, // Reset delay for new image
+                        }
                         : img
                 ),
             }));
@@ -174,14 +181,14 @@ export function useImageGeneration() {
                 generatedImages: prev.generatedImages.map((img) =>
                     img.segmentId === segmentId
                         ? {
-                              ...img,
-                              imageUrl: result,
-                              imagePrompt: 'User uploaded image',
-                              width: 1920,
-                              height: 1080,
-                              key: `${Date.now()}-${segmentId}`,
-                              delay: 0, // Reset delay for uploaded image
-                          }
+                            ...img,
+                            imageUrl: result,
+                            imagePrompt: 'User uploaded image',
+                            width: 1920,
+                            height: 1080,
+                            key: `${Date.now()}-${segmentId}`,
+                            delay: 0, // Reset delay for uploaded image
+                        }
                         : img
                 ),
             }));

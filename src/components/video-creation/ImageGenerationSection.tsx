@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 
 interface ImageGenerationSectionProps {
     imageState: ImageGenerationState;
-    onRegenerateImage: (segmentId: number) => void;
+    onRegenerateImage: (segmentId: number, customScriptText?: string) => void;
     onUploadImage: (segmentId: number, file: File) => void;
     onDebugImages: () => void;
 }
@@ -50,35 +50,19 @@ export function ImageGenerationSection({
                             Generated Images (
                             {imageState.generatedImages.length})
                         </h4>
-                        <div className='flex gap-2'>
-                            <Button
-                                size='sm'
-                                variant='outline'
-                                onClick={onDebugImages}
-                            >
-                                Debug Images
-                            </Button>
-                        </div>
                     </div>
 
-                    <div className='text-xs text-gray-600 bg-blue-50 p-2 rounded'>
-                        💡 AI images load with {DELAY_INCREMENT / 1000}-second
-                        delays to avoid rate limits. Each image will appear
-                        progressively.
-                    </div>
-
-                    <ScrollArea className='h-80 border rounded-lg p-4'>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                            {imageState.generatedImages.map((image) => (
+                    <div className='space-y-4'>
+                        {imageState.generatedImages.map((image) => (
+                            <div key={`${image.key}`} className='w-full border rounded-lg'>
                                 <ImageCard
-                                    key={`${image.key}`}
                                     image={image}
                                     onRegenerate={onRegenerateImage}
                                     onUpload={onUploadImage}
                                 />
-                            ))}
-                        </div>
-                    </ScrollArea>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 

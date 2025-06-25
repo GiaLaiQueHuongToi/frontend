@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -38,6 +38,9 @@ export function CreateVideoFlow() {
 
     // Video generation status for step 7 validation
     const [hasGeneratedVideo, setHasGeneratedVideo] = useState(false);
+
+    // Track previous step to handle audio clearing logic
+    const previousStepRef = useRef<number>(0);
 
     // Destructure state for easier access
     const {
@@ -77,6 +80,12 @@ export function CreateVideoFlow() {
             setHasGeneratedVideo(false);
         }
     }, [currentStep]);
+
+    // Track step changes to know where user came from
+    const prevStep = previousStepRef.current;
+    useEffect(() => {
+        previousStepRef.current = currentStep;
+    });
 
     const renderStepContent = () => {
         switch (currentStep) {
@@ -178,12 +187,13 @@ export function CreateVideoFlow() {
                 return (
                     <ImageGenerationSection
                         imageState={imageGeneration}
-                        onRegenerateImage={(segmentId) => {
+                        onRegenerateImage={(segmentId, customScriptText) => {
                             if (scriptGeneration.videoOutline) {
                                 imageGeneration.regenerateIndividualImage(
                                     segmentId,
                                     scriptGeneration.videoOutline,
-                                    getVideoContext()
+                                    getVideoContext(),
+                                    customScriptText
                                 );
                             }
                         }}
@@ -207,6 +217,7 @@ export function CreateVideoFlow() {
                         onUpdateState={updateState}
                         onSegmentsChange={setSegments}
                         initialSegments={segments}
+                        previousStep={prevStep}
                     />
                 );
 

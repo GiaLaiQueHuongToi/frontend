@@ -8,6 +8,7 @@ import {
     SelectContent,
     SelectItem,
     SelectTrigger,
+
     SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -16,8 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Mic, Play, Download, RefreshCw } from 'lucide-react';
 import type { VideoCreationState, ImageGenerationState, GeneratedSegment } from '@/types/video-creation';
 import { useEffect, useState } from 'react';
-import audioService, { AudioRequest } from '@/services/audioService';
-
+import audioService, { AudioRequest } from '@/services/AudioService';
 
 interface VoiceGenerationStepProps {
     imageState: ImageGenerationState;
@@ -25,9 +25,10 @@ interface VoiceGenerationStepProps {
     onUpdateState: (updates: Partial<VideoCreationState>) => void;
     onSegmentsChange?: (segments: GeneratedSegment[]) => void;
     initialSegments?: GeneratedSegment[]; // Add prop to receive existing segments
+    previousStep?: number; // Add prop to track where user came from
 }
 
-export function VoiceGenerationStep({ imageState, state, onUpdateState, onSegmentsChange, initialSegments }: VoiceGenerationStepProps) {
+export function VoiceGenerationStep({ imageState, state, onUpdateState, onSegmentsChange, initialSegments, previousStep }: VoiceGenerationStepProps) {
     const [segments, setSegments] = useState<GeneratedSegment[]>(initialSegments || []);
     const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
     const [audioGenerationKey, setAudioGenerationKey] = useState(0);
@@ -180,10 +181,29 @@ export function VoiceGenerationStep({ imageState, state, onUpdateState, onSegmen
 
     // Sync with initial segments when prop changes (e.g., coming back from next step)
     useEffect(() => {
-        if (initialSegments && initialSegments.length > 0) {
+        // If coming from image generation step (step 5), clear audio and create fresh segments
+        if (previousStep === 5) {
+            console.log('Coming from image generation step - clearing audio and creating fresh segments');
+            const freshSegments = imageState.generatedImages.map(image => ({
+                segmentId: image.segmentId,
+                imageUrl: image.imageUrl,
+                scriptText: image.scriptText,
+                duration: Math.max(3, image.scriptText.length * 0.08),
+                audioUrl: undefined // Clear audio when coming from image generation
+            }));
+            setSegments(freshSegments);
+        }
+        // If coming from video generation step (step 7), preserve existing segments with audio
+        else if (previousStep === 7 && initialSegments && initialSegments.length > 0) {
+            console.log('Coming from video generation step - preserving existing segments with audio');
             setSegments(initialSegments);
         }
-    }, [initialSegments]);
+        // First time entering or other cases, use initialSegments if available
+        else if (initialSegments && initialSegments.length > 0 && segments.length === 0) {
+            console.log('First time entering or other cases - using initial segments');
+            setSegments(initialSegments);
+        }
+    }, [previousStep, initialSegments, imageState.generatedImages]);
 
     return (
         <div className='space-y-6'>

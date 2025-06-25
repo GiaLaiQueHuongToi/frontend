@@ -3,7 +3,7 @@ import type {
     ImageGenerationResult as BaseImageGenerationResult,
     VideoOutlineRequest,
     VideoOutlineResponse,
-} from '@/services/geminiService';
+} from '@/services/GeminiService';
 
 // Extended version with individual key for re-rendering
 export interface ImageGenerationResult extends BaseImageGenerationResult {

@@ -1,17 +1,35 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { RefreshCw, Upload } from 'lucide-react';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import type { ImageGenerationResult } from '@/types/video-creation';
 
 interface ImageCardProps {
     image: ImageGenerationResult;
-    onRegenerate: (segmentId: number) => void;
+    onRegenerate: (segmentId: number, customScriptText?: string) => void;
     onUpload: (segmentId: number, file: File) => void;
 }
 
 export function ImageCard({ image, onRegenerate, onUpload }: ImageCardProps) {
+    const [editedScriptText, setEditedScriptText] = useState(image.scriptText);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Auto-resize textarea based on content
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${Math.max(60, textarea.scrollHeight)}px`;
+        }
+    }, [editedScriptText]);
+
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setEditedScriptText(e.target.value);
+    };
+
     const handleUploadClick = () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -23,6 +41,10 @@ export function ImageCard({ image, onRegenerate, onUpload }: ImageCardProps) {
             }
         };
         input.click();
+    };
+
+    const handleRegenerateClick = () => {
+        onRegenerate(image.segmentId, editedScriptText);
     };
 
     const getImageType = (url: string) => {
@@ -50,8 +72,18 @@ export function ImageCard({ image, onRegenerate, onUpload }: ImageCardProps) {
             </div>
 
             <div className='p-3 space-y-2'>
-                <div className='text-sm font-medium text-gray-800 line-clamp-2'>
-                    "{image.scriptText}"
+                <div className='space-y-2'>
+                    <div className='text-sm font-medium text-gray-600 mb-1'>
+                        Script Text:
+                    </div>
+                    <Textarea
+                        ref={textareaRef}
+                        value={editedScriptText}
+                        onChange={handleTextChange}
+                        placeholder="Enter script text..."
+                        className='text-sm resize-none min-h-[60px] overflow-hidden'
+                        rows={1}
+                    />
                 </div>
 
                 <div className='text-xs text-gray-500 bg-gray-50 p-2 rounded'>
@@ -76,7 +108,7 @@ export function ImageCard({ image, onRegenerate, onUpload }: ImageCardProps) {
                     <Button
                         size='sm'
                         variant='outline'
-                        onClick={() => onRegenerate(image.segmentId)}
+                        onClick={handleRegenerateClick}
                         className='flex-1 text-xs'
                     >
                         <RefreshCw className='w-3 h-3 mr-1' />
