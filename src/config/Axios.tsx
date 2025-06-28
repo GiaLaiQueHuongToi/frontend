@@ -10,6 +10,16 @@ const Axios: AxiosInstance = axios.create({
 
 // Add request interceptor to include token
 Axios.interceptors.request.use((config) => {
+
+      // Log all outgoing API calls
+      console.log('🚀 API Request:', {
+        method: config.method?.toUpperCase(),
+        url:  config.url,
+        headers: config.headers,
+        data: config.data,
+        timestamp: new Date().toISOString()
+      });
+
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -25,15 +35,15 @@ Axios.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Token expired or invalid, clear auth and redirect
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('username');
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('user');
+      // localStorage.removeItem('accessToken');
+      // localStorage.removeItem('username');
+      // localStorage.removeItem('isAuthenticated');
+      // localStorage.removeItem('user');
       
       // Only redirect if not already on auth pages
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-        window.location.href = '/login';
-      }
+      // if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+      //   window.location.href = '/login';
+      // }
     }
     return Promise.reject(error);
   }

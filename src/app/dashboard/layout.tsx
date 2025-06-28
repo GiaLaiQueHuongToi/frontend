@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { useAuth } from '@/hooks/useAuth';
+import { authService } from '@/services/authService';
 
 export default function DashboardLayout({
     children,
@@ -14,11 +15,14 @@ export default function DashboardLayout({
     const { isAuthenticated, isLoading } = useAuth();
     const router = useRouter();
 
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push('/login');
-        }
-    }, [isAuthenticated, isLoading, router]);
+    // useEffect(() => {
+    //     if (!isLoading && !authService.isAuthenticated()) {
+    //         console.log('isAuthenticated:', isAuthenticated);
+    //         console.log('isLoading:', isLoading);
+    //         console.log('Redirecting to login page');
+    //         //router.push('/login');
+    //     }
+    // }, [isAuthenticated, isLoading, router]);
 
     // Show loading spinner while checking authentication
     if (isLoading) {

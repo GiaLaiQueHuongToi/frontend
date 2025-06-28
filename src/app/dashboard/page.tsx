@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Video, Plus, Eye, Youtube, ExternalLink } from 'lucide-react';
+import { Video, Plus, Eye, Youtube, ExternalLink, RefreshCw } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { googleOAuthService } from '@/services/googleOAuthService';
 import { useAuth } from '@/hooks/useAuth';
+import { youtubeStatsService, type YouTubeStats } from '@/services/youtubeService';
 
 // Mock data for videos
 const mockVideos = [
@@ -36,28 +37,49 @@ const mockVideos = [
 ];
 
 export default function DashboardPage() {
-    
     const [isConnecting, setIsConnecting] = useState(false);
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
+    const [youtubeStats, setYoutubeStats] = useState<YouTubeStats | null>(null);
     const { toast } = useToast();
+    const { user, isYouTubeConnected, checkYouTubeConnection } = useAuth();
 
-    const { user, isYouTubeConnected } = useAuth();
+    // Load YouTube stats when connected
+    useEffect(() => {
+        if (isYouTubeConnected) {
+            loadYouTubeStats();
+        }
+    }, [isYouTubeConnected]);
+
+    const loadYouTubeStats = async () => {
+        if (!isYouTubeConnected) return;
+        
+        try {
+            setIsLoadingStats(true);
+            const stats = await youtubeStatsService.getChannelStats();
+            setYoutubeStats(stats);
+        } catch (error) {
+            console.error('Failed to load YouTube stats:', error);
+            toast({
+                title: 'Stats Loading Failed',
+                description: 'Could not fetch YouTube statistics.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoadingStats(false);
+        }
+    };
 
     const connectYoutube = async () => {
         console.log('Connecting to YouTube...');
         try {
             setIsConnecting(true);
-
-            console.log("set isConnecting to true");
             
             // Get Google OAuth URL
             const authUrl = googleOAuthService.getAuthUrl();
-            console.log('Redirecting to Google OAuth:', authUrl);
             
             if (!authUrl) {
                 throw new Error('Google OAuth not configured');
             }
-
-            console.log('Redirecting to Google OAuth:', authUrl);
 
             toast({
                 title: 'Redirecting to Google',
@@ -66,7 +88,6 @@ export default function DashboardPage() {
 
             // Show loading state briefly before redirect
             setTimeout(() => {
-                // Redirect to Google OAuth
                 window.location.href = authUrl;
             }, 1000);
 
@@ -82,6 +103,16 @@ export default function DashboardPage() {
         }
     };
 
+    const refreshStats = async () => {
+        if (isYouTubeConnected) {
+            await loadYouTubeStats();
+            toast({
+                title: 'Stats Refreshed',
+                description: 'YouTube statistics have been updated.',
+            });
+        }
+    };
+
     return (
         <div className='container mx-auto p-6'>
             <div className='flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4'>
@@ -91,16 +122,30 @@ export default function DashboardPage() {
                         Manage and create your AI-powered videos
                     </p>
                 </div>
-                <Link href='/dashboard/create'>
-                    <Button className='gap-2'>
-                        <Plus className='h-4 w-4' />
-                        Create New Video
-                    </Button>
-                </Link>
+                <div className='flex gap-2'>
+                    {isYouTubeConnected && (
+                        <Button
+                            variant='outline'
+                            onClick={refreshStats}
+                            disabled={isLoadingStats}
+                            className='gap-2'
+                        >
+                            <RefreshCw className={`h-4 w-4 ${isLoadingStats ? 'animate-spin' : ''}`} />
+                            Refresh Stats
+                        </Button>
+                    )}
+                    <Link href='/dashboard/create'>
+                        <Button className='gap-2'>
+                            <Plus className='h-4 w-4' />
+                            Create New Video
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
             <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
-                <Card>
+                {/* Total Videos Card */}
+                <Card className={`${!isYouTubeConnected ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <CardHeader className='flex flex-row items-center justify-between pb-2'>
                         <CardTitle className='text-sm font-medium'>
                             Total Videos
@@ -109,14 +154,24 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className='text-2xl font-bold'>
-                            {mockVideos.length}
+                            {isYouTubeConnected ? (
+                                isLoadingStats ? (
+                                    <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                                ) : (
+                                    youtubeStats?.videoCount || '0'
+                                )
+                            ) : (
+                                <span className='text-gray-400'>--</span>
+                            )}
                         </div>
-                        <p className='text-xs text-muted-foreground'>
-                            +2 from last week
+                        <p className='text-xs text-muted-foreground mt-1'>
+                            {isYouTubeConnected ? 'YouTube videos' : 'Connect YouTube to view'}
                         </p>
                     </CardContent>
                 </Card>
-                <Card>
+
+                {/* Total Views Card */}
+                <Card className={`${!isYouTubeConnected ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <CardHeader className='flex flex-row items-center justify-between pb-2'>
                         <CardTitle className='text-sm font-medium'>
                             Total Views
@@ -124,12 +179,24 @@ export default function DashboardPage() {
                         <Eye className='h-4 w-4 text-muted-foreground' />
                     </CardHeader>
                     <CardContent>
-                        <div className='text-2xl font-bold'>2,664</div>
-                        <p className='text-xs text-muted-foreground'>
-                            +20% from last month
+                        <div className='text-2xl font-bold'>
+                            {isYouTubeConnected ? (
+                                isLoadingStats ? (
+                                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
+                                ) : (
+                                    youtubeStats?.totalViews ? youtubeStats.totalViews.toLocaleString() : '0'
+                                )
+                            ) : (
+                                <span className='text-gray-400'>--</span>
+                            )}
+                        </div>
+                        <p className='text-xs text-muted-foreground mt-1'>
+                            {isYouTubeConnected ? 'Channel views' : 'Connect YouTube to view'}
                         </p>
                     </CardContent>
                 </Card>
+
+                {/* YouTube Connection Card */}
                 <Card>
                     <CardHeader className='flex flex-row items-center justify-between pb-2'>
                         <CardTitle className='text-sm font-medium'>
@@ -139,9 +206,19 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         {isYouTubeConnected ? (
-                            <div className='flex items-center gap-2'>
-                                <div className='h-2 w-2 rounded-full bg-green-500'></div>
-                                <span className='text-sm'>Connected</span>
+                            <div className='flex items-center justify-between'>
+                                <div className='flex items-center gap-2'>
+                                    <div className='h-2 w-2 rounded-full bg-green-500'></div>
+                                    <span className='text-sm'>Connected</span>
+                                </div>
+                                <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    onClick={checkYouTubeConnection}
+                                    className='h-6 w-6 p-0'
+                                >
+                                    <RefreshCw className='h-3 w-3' />
+                                </Button>
                             </div>
                         ) : (
                             <Button
@@ -149,7 +226,7 @@ export default function DashboardPage() {
                                 size='sm'
                                 onClick={connectYoutube}
                                 disabled={isConnecting}
-                                className="gap-2"
+                                className="gap-2 w-full"
                             >
                                 {isConnecting ? (
                                     <>
@@ -168,7 +245,7 @@ export default function DashboardPage() {
                 </Card>
             </div>
 
-            {/* Rest of your existing code for Tabs and video listings */}
+            {/* Tabs for video listings */}
             <Tabs defaultValue='all' className='w-full'>
                 <div className='flex justify-between items-center mb-4'>
                     <TabsList>

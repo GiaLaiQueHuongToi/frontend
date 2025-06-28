@@ -76,19 +76,40 @@ export function useAuth(): UseAuth {
     }
   };
 
+  // Add this to your existing useAuth hook
   const checkYouTubeConnection = async () => {
     try {
       // First, check if YouTube access token exists in localStorage
       const youtubeToken = localStorage.getItem('youtubeAccessToken');
       
       if (youtubeToken) {
-        // Token exists in localStorage
-        console.log('YouTube token found in localStorage');
-        setIsYouTubeConnected(true);
-        return;
+        // Verify token is still valid by making a test API call
+        try {
+          const response = await fetch(
+            'https://www.googleapis.com/youtube/v3/channels?part=id&mine=true',
+            {
+              headers: {
+                'Authorization': `Bearer ${youtubeToken}`,
+                'Accept': 'application/json',
+              }
+            }
+          );
+
+          if (response.ok) {
+            console.log('YouTube token is valid');
+            setIsYouTubeConnected(true);
+            return;
+          } else if (response.status === 401) {
+            // Token expired, remove it
+            localStorage.removeItem('youtubeAccessToken');
+            console.log('YouTube token expired, removed from storage');
+          }
+        } catch (error) {
+          console.warn('YouTube token validation failed:', error);
+        }
       }
-  
-      // Token not in localStorage, check server
+
+      // Token not in localStorage or invalid, check server
       console.log('YouTube token not found locally, checking server...');
       const response = await Axios.get('/auth/youtube-access-token');
       
@@ -123,7 +144,8 @@ export function useAuth(): UseAuth {
       
       console.log('Attempting login with credentials:', credentials);
       await authService.login(credentials);
-      
+
+      console.log('Login successful, fetching user profile...');
       // Update state
       setIsAuthenticated(true);
       
@@ -155,6 +177,8 @@ export function useAuth(): UseAuth {
         localStorage.removeItem('redirectAfterLogin');
         router.push(redirectPath);
       } else {
+        console.log('isAuthenticated:', isAuthenticated);
+        console.log('isLoading:', isLoading);
         router.push('/dashboard');
       }
       
@@ -233,4 +257,6 @@ export function useAuth(): UseAuth {
     checkAuth,
     checkYouTubeConnection,
   };
+
+  
 }
