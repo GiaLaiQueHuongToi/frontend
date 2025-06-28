@@ -114,6 +114,7 @@ export const authService = {
     localStorage.removeItem('username');
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('user');
+    localStorage.removeItem('youtubeAccessToken'); // Clear YouTube token if stored
     
     // Redirect to home page
     window.location.href = '/';

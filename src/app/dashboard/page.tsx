@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Video, Plus, Eye, Youtube } from 'lucide-react';
+import { Video, Plus, Eye, Youtube, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { googleOAuthService } from '@/services/googleOAuthService';
+import { useAuth } from '@/hooks/useAuth';
 
 // Mock data for videos
 const mockVideos = [
@@ -34,19 +36,50 @@ const mockVideos = [
 ];
 
 export default function DashboardPage() {
-    const [isYoutubeConnected, setIsYoutubeConnected] = useState(false);
+    
+    const [isConnecting, setIsConnecting] = useState(false);
     const { toast } = useToast();
 
-    const connectYoutube = () => {
-        // Simulate YouTube connection
-        setTimeout(() => {
-            setIsYoutubeConnected(true);
+    const { user, isYouTubeConnected } = useAuth();
+
+    const connectYoutube = async () => {
+        console.log('Connecting to YouTube...');
+        try {
+            setIsConnecting(true);
+
+            console.log("set isConnecting to true");
+            
+            // Get Google OAuth URL
+            const authUrl = googleOAuthService.getAuthUrl();
+            console.log('Redirecting to Google OAuth:', authUrl);
+            
+            if (!authUrl) {
+                throw new Error('Google OAuth not configured');
+            }
+
+            console.log('Redirecting to Google OAuth:', authUrl);
+
             toast({
-                title: 'YouTube Connected',
-                description:
-                    'Your YouTube account has been successfully connected.',
+                title: 'Redirecting to Google',
+                description: 'You will be redirected to Google to authorize YouTube access.',
             });
-        }, 1500);
+
+            // Show loading state briefly before redirect
+            setTimeout(() => {
+                // Redirect to Google OAuth
+                window.location.href = authUrl;
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error initiating YouTube connection:', error);
+            setIsConnecting(false);
+            
+            toast({
+                title: 'Connection Failed',
+                description: 'Failed to initiate YouTube connection. Please try again.',
+                variant: 'destructive',
+            });
+        }
     };
 
     return (
@@ -105,7 +138,7 @@ export default function DashboardPage() {
                         <Youtube className='h-4 w-4 text-muted-foreground' />
                     </CardHeader>
                     <CardContent>
-                        {isYoutubeConnected ? (
+                        {isYouTubeConnected ? (
                             <div className='flex items-center gap-2'>
                                 <div className='h-2 w-2 rounded-full bg-green-500'></div>
                                 <span className='text-sm'>Connected</span>
@@ -115,14 +148,27 @@ export default function DashboardPage() {
                                 variant='outline'
                                 size='sm'
                                 onClick={connectYoutube}
+                                disabled={isConnecting}
+                                className="gap-2"
                             >
-                                Connect YouTube
+                                {isConnecting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-600"></div>
+                                        Connecting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <ExternalLink className='h-3 w-3' />
+                                        Connect YouTube
+                                    </>
+                                )}
                             </Button>
                         )}
                     </CardContent>
                 </Card>
             </div>
 
+            {/* Rest of your existing code for Tabs and video listings */}
             <Tabs defaultValue='all' className='w-full'>
                 <div className='flex justify-between items-center mb-4'>
                     <TabsList>
