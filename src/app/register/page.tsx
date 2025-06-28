@@ -1,13 +1,12 @@
 'use client';
 
 import type React from 'react';
-
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     Card,
     CardContent,
@@ -16,42 +15,51 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Sparkles, ArrowLeft } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function RegisterPage() {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
-    const { toast } = useToast();
+    const [error, setError] = useState<string | null>(null);
+    const { register, isLoading } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Clear previous errors
+        setError(null);
 
-        if (password !== confirmPassword) {
-            toast({
-                title: "Passwords don't match",
-                description: 'Please make sure your passwords match.',
-                variant: 'destructive',
-            });
+        // Validation
+        if (!username || !password || !confirmPassword) {
+            setError('Please fill in all fields');
             return;
         }
 
-        setIsLoading(true);
+        if (password !== confirmPassword) {
+            setError("Passwords don't match");
+            return;
+        }
 
-        // Simulate registration process
-        setTimeout(() => {
-            setIsLoading(false);
-            toast({
-                title: 'Registration successful',
-                description:
-                    'Your account has been created. Redirecting to dashboard...',
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters long');
+            return;
+        }
+
+        try {
+            await register({
+                username,
+                password,
+                confirmPassword,
             });
-            router.push('/dashboard');
-        }, 1500);
+            // Success will be handled by useAuth hook - redirects to login
+        } catch (error) {
+            // Display specific error message
+            const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+            setError(errorMessage);
+            console.error('Registration failed:', error);
+        }
     };
 
     return (
@@ -80,24 +88,24 @@ export default function RegisterPage() {
                     </CardHeader>
                     <form onSubmit={handleSubmit}>
                         <CardContent className='space-y-4'>
+                            {/* Error Alert */}
+                            {error && (
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription>{error}</AlertDescription>
+                                </Alert>
+                            )}
+
                             <div className='space-y-2'>
-                                <Label htmlFor='name'>Full Name</Label>
+                                <Label htmlFor='username'>Username</Label>
                                 <Input
-                                    id='name'
-                                    placeholder='John Doe'
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className='space-y-2'>
-                                <Label htmlFor='email'>Email</Label>
-                                <Input
-                                    id='email'
-                                    type='email'
-                                    placeholder='your.email@example.com'
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    id='username'
+                                    placeholder='Enter your username'
+                                    value={username}
+                                    onChange={(e) => {
+                                        setUsername(e.target.value);
+                                        if (error) setError(null); // Clear error on input
+                                    }}
                                     required
                                 />
                             </div>
@@ -106,10 +114,12 @@ export default function RegisterPage() {
                                 <Input
                                     id='password'
                                     type='password'
+                                    placeholder='Enter your password (min 6 characters)'
                                     value={password}
-                                    onChange={(e) =>
-                                        setPassword(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (error) setError(null); // Clear error on input
+                                    }}
                                     required
                                 />
                             </div>
@@ -120,10 +130,12 @@ export default function RegisterPage() {
                                 <Input
                                     id='confirmPassword'
                                     type='password'
+                                    placeholder='Confirm your password'
                                     value={confirmPassword}
-                                    onChange={(e) =>
-                                        setConfirmPassword(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        setConfirmPassword(e.target.value);
+                                        if (error) setError(null); // Clear error on input
+                                    }}
                                     required
                                 />
                             </div>
@@ -132,7 +144,7 @@ export default function RegisterPage() {
                             <Button
                                 type='submit'
                                 className='w-full'
-                                disabled={isLoading}
+                                disabled={isLoading || !username || !password || !confirmPassword}
                             >
                                 {isLoading
                                     ? 'Creating account...'
