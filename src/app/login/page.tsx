@@ -1,13 +1,12 @@
 'use client';
 
 import type React from 'react';
-
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     Card,
     CardContent,
@@ -16,29 +15,34 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { Sparkles, ArrowLeft } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
-    const { toast } = useToast();
+    const [error, setError] = useState<string | null>(null);
+    const { login, isLoading } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsLoading(true);
+        
+        // Clear previous errors
+        setError(null);
+        
+        if (!username || !password) {
+            setError('Please enter both username and password');
+            return;
+        }
 
-        // Simulate login process
-        setTimeout(() => {
-            setIsLoading(false);
-            toast({
-                title: 'Login successful',
-                description: 'Redirecting to dashboard...',
-            });
-            router.push('/dashboard');
-        }, 1500);
+        try {
+            await login({ username, password });
+        } catch (error) {
+            // Display specific error message
+            const errorMessage = error instanceof Error ? error.message : 'Login failed';
+            setError(errorMessage);
+            console.error('Login failed:', error);
+        }
     };
 
     return (
@@ -65,14 +69,25 @@ export default function LoginPage() {
                     </CardHeader>
                     <form onSubmit={handleSubmit}>
                         <CardContent className='space-y-4'>
+                            {/* Error Alert */}
+                            {error && (
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription>{error}</AlertDescription>
+                                </Alert>
+                            )}
+                            
                             <div className='space-y-2'>
-                                <Label htmlFor='email'>Email</Label>
+                                <Label htmlFor='username'>Username</Label>
                                 <Input
-                                    id='email'
-                                    type='email'
-                                    placeholder='your.email@example.com'
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    id='username'
+                                    type='text'
+                                    placeholder='Enter your username'
+                                    value={username}
+                                    onChange={(e) => {
+                                        setUsername(e.target.value);
+                                        if (error) setError(null); // Clear error on input
+                                    }}
                                     required
                                 />
                             </div>
@@ -89,10 +104,12 @@ export default function LoginPage() {
                                 <Input
                                     id='password'
                                     type='password'
+                                    placeholder='Enter your password'
                                     value={password}
-                                    onChange={(e) =>
-                                        setPassword(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (error) setError(null); // Clear error on input
+                                    }}
                                     required
                                 />
                             </div>
@@ -101,7 +118,7 @@ export default function LoginPage() {
                             <Button
                                 type='submit'
                                 className='w-full'
-                                disabled={isLoading}
+                                disabled={isLoading || !username || !password}
                             >
                                 {isLoading ? 'Signing in...' : 'Sign In'}
                             </Button>
