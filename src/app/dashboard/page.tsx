@@ -164,7 +164,7 @@ export default function DashboardPage() {
                     <TabsList>
                         <TabsTrigger value='all'>All Videos</TabsTrigger>
                         <TabsTrigger value='published'>Published</TabsTrigger>
-                        <TabsTrigger value='draft'>Drafts</TabsTrigger>
+                        <TabsTrigger value='private'>Private</TabsTrigger>
                     </TabsList>
                 </div>
 
@@ -317,7 +317,7 @@ export default function DashboardPage() {
                     )}
                 </TabsContent>
 
-                <TabsContent value='draft'>
+                <TabsContent value='private'>
                     {isLoadingVideos ? (
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                             {[...Array(3)].map((_, i) => (
@@ -330,15 +330,15 @@ export default function DashboardPage() {
                                 </Card>
                             ))}
                         </div>
-                    ) : getFilteredVideos('draft').length === 0 ? (
+                    ) : getFilteredVideos('private').length === 0 ? (
                         <div className='text-center py-12'>
                             <Video className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-                            <h3 className='text-lg font-medium text-gray-900 mb-2'>No draft videos</h3>
-                            <p className='text-gray-500'>Draft videos will appear here</p>
+                            <h3 className='text-lg font-medium text-gray-900 mb-2'>No private videos</h3>
+                            <p className='text-gray-500'>private videos will appear here</p>
                         </div>
                     ) : (
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-                            {getFilteredVideos('draft').map((video) => (
+                            {getFilteredVideos('private').map((video) => (
                                 <Link
                                     href={`/dashboard/video/${video.id}`}
                                     key={video.id}
@@ -354,7 +354,7 @@ export default function DashboardPage() {
                                                 }}
                                             />
                                             <div className='absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded'>
-                                                Draft
+                                                private
                                             </div>
                                         </div>
                                         <CardContent className='p-4'>

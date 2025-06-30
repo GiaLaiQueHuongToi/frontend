@@ -1,13 +1,28 @@
 import Axios from '@/config/Axios';
 
-export interface VideoResponse {
+export interface PublishedVideoResponse {
     id: number;
     title: string;
-    videoUrl: string;
+    videoUrl: string; // cloudinary url
     status: 'draft' | 'published';
     views: number;
     description: string;
     createdAt: string;
+    platform: string; // e.g., YouTube, TikTok, Facebook
+    externalId: string; // ID on external platform
+    url: string; // URL of published video on platform
+    publishedAt: string; // DateTime when the video was published
+}
+
+export interface VideoResponse {
+    id: number;
+    title: string;
+    videoUrl: string;
+    status: 'private' | 'published';
+    views: number;
+    description: string;
+    createdAt: string;
+    publishedVideos: PublishedVideoResponse[]; // List of published videos
 }
 
 export interface PageResponse<T> {
@@ -252,6 +267,118 @@ export class VideoService {
             return `${window.location.origin}/embed/video/${videoId}`;
         }
         return `https://yourdomain.com/embed/video/${videoId}`;
+    }
+
+    // Share published video from specific platform
+    async sharePublishedVideo(publishedVideo: PublishedVideoResponse): Promise<boolean> {
+        try {
+            const shareUrl = publishedVideo.url; // Use the platform URL
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(shareUrl);
+                return true;
+            } else {
+                return this.fallbackCopyToClipboard(shareUrl);
+            }
+        } catch (error) {
+            console.error('Error sharing published video:', error);
+            try {
+                return this.fallbackCopyToClipboard(publishedVideo.url);
+            } catch (fallbackError) {
+                console.error('Fallback copy also failed:', fallbackError);
+                return false;
+            }
+        }
+    }
+
+    // Get platform-specific share text
+    getPlatformShareText(publishedVideo: PublishedVideoResponse): string {
+        const baseText = `Check out this video: ${publishedVideo.title}`;
+        
+        switch (publishedVideo.platform.toLowerCase()) {
+            case 'youtube':
+                return `🎬 ${baseText}\n${publishedVideo.url}`;
+            case 'tiktok':
+                return `📱 ${baseText}\n${publishedVideo.url}`;
+            case 'facebook':
+                return `📢 ${baseText}\n${publishedVideo.url}`;
+            case 'instagram':
+                return `📸 ${baseText}\n${publishedVideo.url}`;
+            default:
+                return `${baseText}\n${publishedVideo.url}`;
+        }
+    }
+
+    // Share video using native Web Share API with platform-specific content
+    async shareVideoNative(video: VideoResponse, publishedVideo?: PublishedVideoResponse): Promise<boolean> {
+        try {
+            if (!navigator.share) {
+                return false; // Web Share API not available
+            }
+
+            let shareData: ShareData;
+
+            if (publishedVideo) {
+                // Share the published video from the platform
+                shareData = {
+                    title: publishedVideo.title,
+                    text: `Check out this video on ${publishedVideo.platform}`,
+                    url: publishedVideo.url,
+                };
+            } else {
+                // Share the original video
+                shareData = {
+                    title: video.title,
+                    text: video.description || `Check out this video: ${video.title}`,
+                    url: this.generateShareLink(video.id),
+                };
+            }
+
+            await navigator.share(shareData);
+            return true;
+        } catch (error) {
+            console.error('Native share failed:', error);
+            return false;
+        }
+    }
+
+    // Get platform icon for UI
+    getPlatformIcon(platform: string): string {
+        switch (platform.toLowerCase()) {
+            case 'youtube':
+                return '🎬';
+            case 'tiktok':
+                return '📱';
+            case 'facebook':
+                return '📘';
+            case 'instagram':
+                return '📸';
+            case 'twitter':
+            case 'x':
+                return '🐦';
+            default:
+                return '🔗';
+        }
+    }
+
+    // Format platform name for display
+    formatPlatformName(platform: string): string {
+        switch (platform.toLowerCase()) {
+            case 'youtube':
+                return 'YouTube';
+            case 'tiktok':
+                return 'TikTok';
+            case 'facebook':
+                return 'Facebook';
+            case 'instagram':
+                return 'Instagram';
+            case 'twitter':
+                return 'Twitter';
+            case 'x':
+                return 'X (Twitter)';
+            default:
+                return platform.charAt(0).toUpperCase() + platform.slice(1);
+        }
     }
 
     // Helper method to sanitize filename for downloads

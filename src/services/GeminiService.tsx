@@ -3,13 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(
     process.env.NEXT_PUBLIC_GEMINI_API_KEY || ''
-);  
-
-export interface VideoOutlineRequest {
-    description: string;
-    targetAudience: string;
-    videoGoal: string;
-}
+);
 
 export interface VideoScriptSegment {
     id: number;
@@ -242,8 +236,12 @@ function createStyledPlaceholder(
 }
 
 export const geminiService = {
-    generateVideoOutline: async (
-        request: VideoOutlineRequest
+
+    generateScript: async (
+        topic: string,
+        audience: string = 'general audience',
+        goal: string = 'inform and engage',
+        duration: number = 60
     ): Promise<VideoOutlineResponse> => {
         try {
             const model = genAI.getGenerativeModel({
@@ -251,16 +249,17 @@ export const geminiService = {
             });
 
             const prompt = `
-                You are an expert short-form video content creator and scriptwriter. Based on the following information, generate a complete and engaging script breakdown for approximately 60-second video.
+                You are an expert short-form video content creator and scriptwriter. Generate a complete and engaging script for a ${duration}-second video about "${topic}".
 
-                **Video Description:** ${request.description}
-                **Target Audience:** ${request.targetAudience}
-                **Video Goal:** ${request.videoGoal}
+                **Topic:** ${topic}
+                **Target Audience:** ${audience}
+                **Video Goal:** ${goal}
+                **Duration:** ${duration} seconds
 
                 Return your response in the following JSON format:
 
                 {
-                "contentSummary": "A concise 4-5 sentence summary of the video content and its key message.",
+                "contentSummary": "A concise 4-5 sentence summary of the video content and its key message about ${topic}.",
                 "scriptSegments": [
                     {
                     "id": 1,
@@ -269,25 +268,23 @@ export const geminiService = {
                     "end": 10
                     }
                 ],
-                "estimatedDuration": 60, // Total video duration in seconds
+                "estimatedDuration": ${duration},
                 "keywords": ["keyword1", "keyword2", "keyword3"]
                 }
 
-
                 Guidelines:
-                - The total video duration must be approximately 60 seconds.
-                - Divide the script into 6-8 segments total, each lasting 8-12 seconds.
-                - Create a cohesive narrative flow where each segment connects smoothly to the next, forming a complete story arc.
-                - Each scriptSegment must include:
-                + A concise but informative sentence (15-25 words) that delivers key message clearly.
-                + Accurate start and end times in seconds.
-                + Content that flows naturally from the previous segment and leads into the next.
-                - Structure the narrative with: Hook → Problem/Context → Solution/Main Content → Benefits → Call-to-Action.
-                - Ensure smooth transitions between segments using connecting words or phrases.
-                - Make the content highly relevant, engaging, and easy to read for the target audience.
-                - Each segment should build upon the previous one, creating a compelling story progression.
-                - Add relevant SEO keywords to increase discoverability.
-                - Return only the JSON — no explanations, comments, or extra formatting.
+                - Create content specifically about "${topic}" that is relevant and valuable
+                - Divide the script into 6-8 segments depending on the total duration (each segment should last roughly 8-12 seconds when spoken)
+                - Create a cohesive storytelling flow where each segment naturally connects to build a complete narrative arc about ${topic}
+                - Make the tone conversational, engaging, and natural for ${audience}
+                - Structure the story: Hook about ${topic} → Context/Problem → Main Content → Benefits/Solution → Conclusion → Call-to-Action
+                - Use transitional phrases to ensure smooth flow between segments (e.g., "But here's the thing...", "That's why...", "So what does this mean?")
+                - Each script segment should be concise yet informative (15-25 words) and flow seamlessly into the next
+                - Build momentum throughout the video, with each segment adding value to the overall story about ${topic}
+                - Include relevant keywords related to ${topic} for SEO optimization
+                - Make sure the content directly addresses the ${goal} objective
+                - The start and end times should be provided in seconds for each segment
+                - Return only the JSON — no explanations, comments, or extra formatting
                 `;
 
             const result = await model.generateContent(prompt);
@@ -325,169 +322,49 @@ export const geminiService = {
                 return parsedResponse;
             } catch (parseError) {
                 console.error('Failed to parse Gemini response:', parseError);
-
-                // Fallback response if JSON parsing fails
+                
+                // Create topic-specific fallback segments
                 const fallbackSegments = [
                     {
                         id: 1,
-                        text: 'Attention-grabbing hook that introduces the main topic and creates curiosity about what comes next.',
+                        text: `Ever wondered about ${topic}? Let me share something fascinating that will change your perspective.`,
                         start: 0,
                         end: 12,
                     },
                     {
                         id: 2,
-                        text: 'But here\'s the challenge most people face - establishing the problem that needs solving.',
+                        text: `But here's what most people don't realize about ${topic} - the key insights you need to know.`,
                         start: 12,
-                        end: 36,
+                        end: 24,
                     },
                     {
                         id: 3,
-                        text: 'That\'s exactly why this solution works - presenting the main content with clear benefits.',
+                        text: `That's exactly why ${topic} matters so much - understanding the real impact and benefits it brings.`,
+                        start: 24,
+                        end: 36,
+                    },
+                    {
+                        id: 4,
+                        text: `The science behind ${topic} reveals some surprising facts that will completely shift your understanding.`,
                         start: 36,
                         end: 48,
                     },
                     {
-                        id: 4,
-                        text: 'So what does this mean for you? Take action now and see results immediately.',
+                        id: 5,
+                        text: `So what's your next step with ${topic}? Start applying this knowledge today and see the difference.`,
                         start: 48,
                         end: 60,
                     },
                 ];
 
                 return {
-                    contentSummary: `This video explores ${request.description} targeting ${request.targetAudience} with the goal to ${request.videoGoal}.`,
-                    scriptSegments: fallbackSegments.map(segment => ({
-                        ...segment,
-                        text: cleanScriptText(segment.text)
-                    })),
-                    estimatedDuration: 60,
-                    keywords: ['video', 'content', 'audience'],
-                };
-            }
-        } catch (error) {
-            console.error('Gemini API error:', error);
-            throw new Error(
-                'Failed to generate video outline. Please try again.'
-            );
-        }
-    },
-
-    generateScript: async (
-        topic: string,
-        audience: string,
-        duration: number = 60
-    ): Promise<VideoOutlineResponse> => {
-        try {
-            const model = genAI.getGenerativeModel({
-                model: 'gemini-2.0-flash',
-            });
-
-            const prompt = `
-                Generate a script for approximately ${duration}-second video about "${topic}" for ${audience}.
-                Please return the script as a JSON object with the following structure:
-
-                {
-                "contentSummary": "",
-                "scriptSegments": [
-                    {
-                    "id": 1,
-                    "text": "Concise, engaging content that delivers key information in 15-25 words clearly and effectively.",
-                    "start": 0,
-                    "end": 10
-                    },
-                    {
-                    "id": 2,
-                    "text": "Brief yet informative segment that explores the main content with clear, focused explanations.",
-                    "start": 10,
-                    "end": 20
-                    }
-                ],
-                "estimatedDuration": ${duration}, // Total video duration in seconds
-                "keywords": ["keyword1", "keyword2", "keyword3"]
-                }
-
-                Guidelines:
-                - Divide the script into 6-8 segments depending on the total duration (each segment should last roughly 8-12 seconds when spoken).
-                - Create a cohesive storytelling flow where each segment naturally connects to build a complete narrative arc.
-                - Make the tone conversational, engaging, and natural for ${audience}.
-                - Structure the story: Hook → Context/Problem → Main Content → Benefits/Solution → Conclusion → Call-to-Action.
-                - Use transitional phrases to ensure smooth flow between segments (e.g., "But here's the thing...", "That's why...", "So what does this mean?").
-                - Each script segment (text) should be concise yet informative (15-25 words) and flow seamlessly into the next.
-                - Build momentum throughout the video, with each segment adding value to the overall story.
-                - The start and end times should be provided in seconds for each segment.
-                - Do not include any additional formatting, explanation, or markdown—only return the final JSON response.
-                `;
-
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-
-            try {
-                // Clean the response text to extract JSON
-                const jsonMatch = text.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) {
-                    throw new Error('No JSON found in response');
-                }
-
-                const parsedResponse: VideoOutlineResponse = JSON.parse(
-                    jsonMatch[0]
-                );
-
-                // Clean script text from all segments to remove unwanted patterns like [0-8]
-                if (parsedResponse.scriptSegments) {
-                    parsedResponse.scriptSegments = parsedResponse.scriptSegments.map(segment => ({
-                        ...segment,
-                        text: cleanScriptText(segment.text)
-                    }));
-                }
-
-                // Validate the response structure
-                if (
-                    !parsedResponse.contentSummary ||
-                    !parsedResponse.scriptSegments ||
-                    !Array.isArray(parsedResponse.scriptSegments)
-                ) {
-                    throw new Error('Invalid response structure');
-                }
-
-                return parsedResponse;
-            } catch (parseError) {
-                // Fallback script if parsing fails
-                const fallbackSegments = [
-                    {
-                        id: 1,
-                        text: 'Ever wondered why this topic matters? Let me show you something that will change everything.',
-                        start: 0,
-                        end: 15,
-                    },
-                    {
-                        id: 2,
-                        text: 'But here\'s the problem most people don\'t realize - the key challenge that needs addressing.',
-                        start: 15,
-                        end: 30,
-                    },
-                    {
-                        id: 3,
-                        text: 'That\'s exactly why this approach works so well - the solution with real-world impact.',
-                        start: 30,
-                        end: 45,
-                    },
-                    {
-                        id: 4,
-                        text: 'So what\'s your next step? Start implementing this today and see the difference immediately.',
-                        start: 45,
-                        end: 60,
-                    },
-                ];
-
-                return {
-                    contentSummary: `${topic}`,
+                    contentSummary: `This video explores the fascinating world of ${topic}, providing valuable insights for ${audience}. We'll uncover key concepts, practical applications, and actionable takeaways that will help you better understand and engage with ${topic}. Perfect for anyone looking to expand their knowledge and ${goal} in this important area.`,
                     scriptSegments: fallbackSegments.map(segment => ({
                         ...segment,
                         text: cleanScriptText(segment.text)
                     })),
                     estimatedDuration: duration,
-                    keywords: ['video', 'content', 'audience'],
+                    keywords: [topic.toLowerCase(), 'educational', 'informative', 'guide'],
                 };
             }
         } catch (error) {

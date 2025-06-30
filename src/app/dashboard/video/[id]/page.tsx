@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Download, Share2, Edit, Play, Pause, Link as LinkIcon, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Download, Share2, Edit, Play, Pause, Link as LinkIcon, ExternalLink, Eye, Calendar, Hash, Clock } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,7 +15,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
-import { videoService, type VideoResponse } from '@/services/videoService';
+import { videoService, type VideoResponse, type PublishedVideoResponse } from '@/services/videoService';
 
 export default function VideoDetailPage() {
     const params = useParams();
@@ -143,36 +143,87 @@ export default function VideoDetailPage() {
         }
     };
 
+    const handleSharePublished = async (publishedVideo: PublishedVideoResponse) => {
+        try {
+            // Try native share first
+            const nativeShareSuccess = await videoService.shareVideoNative(video!, publishedVideo);
+            if (nativeShareSuccess) {
+                toast({
+                    title: 'Shared Successfully',
+                    description: `Shared ${publishedVideo.title} from ${videoService.formatPlatformName(publishedVideo.platform)}.`,
+                });
+                return;
+            }
+
+            // Fallback to copying link
+            const success = await videoService.sharePublishedVideo(publishedVideo);
+            if (success) {
+                toast({
+                    title: 'Link Copied',
+                    description: `${videoService.formatPlatformName(publishedVideo.platform)} link copied to clipboard.`,
+                });
+            } else {
+                throw new Error('Share failed');
+            }
+        } catch (error) {
+            console.error('Share error:', error);
+            toast({
+                title: 'Share Failed',
+                description: 'Could not share the video. Please try again.',
+                variant: 'destructive',
+            });
+        }
+    };
+
     // Loading state
     if (isLoading) {
         return (
             <div className='container mx-auto p-6'>
-                <div className='mb-6'>
+                <div className='mb-8'>
                     <Link
                         href='/dashboard'
-                        className='flex items-center gap-2 text-gray-600 hover:text-purple-600 mb-4'
+                        className='inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 mb-6 transition-colors'
                     >
                         <ArrowLeft className='h-4 w-4' />
                         <span>Back to Dashboard</span>
                     </Link>
                 </div>
-                <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-                    <div className='lg:col-span-2'>
+                <div className='grid grid-cols-1 xl:grid-cols-4 gap-6'>
+                    <div className='xl:col-span-3'>
                         <Card className='overflow-hidden'>
                             <div className='aspect-video bg-gray-200 animate-pulse'></div>
-                            <CardContent className='p-4'>
-                                <div className='h-6 bg-gray-200 animate-pulse rounded mb-2'></div>
-                                <div className='h-4 bg-gray-200 animate-pulse rounded w-3/4'></div>
+                            <CardContent className='p-6'>
+                                <div className='h-8 bg-gray-200 animate-pulse rounded mb-3'></div>
+                                <div className='flex items-center gap-4 mb-6'>
+                                    <div className='h-4 bg-gray-200 animate-pulse rounded w-24'></div>
+                                    <div className='h-4 bg-gray-200 animate-pulse rounded w-32'></div>
+                                    <div className='h-4 bg-gray-200 animate-pulse rounded w-16'></div>
+                                </div>
+                                <div className='flex items-center gap-3 mb-6'>
+                                    <div className='h-10 bg-gray-200 animate-pulse rounded w-24'></div>
+                                    <div className='h-10 bg-gray-200 animate-pulse rounded w-20'></div>
+                                    <div className='h-10 bg-gray-200 animate-pulse rounded w-16'></div>
+                                </div>
+                                <div className='h-6 bg-gray-200 animate-pulse rounded mb-3 w-32'></div>
+                                <div className='space-y-2'>
+                                    <div className='h-4 bg-gray-200 animate-pulse rounded'></div>
+                                    <div className='h-4 bg-gray-200 animate-pulse rounded w-3/4'></div>
+                                    <div className='h-4 bg-gray-200 animate-pulse rounded w-1/2'></div>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
-                    <div>
+                    <div className='xl:col-span-1 space-y-6'>
                         <Card>
-                            <CardContent className='p-4'>
-                                <div className='h-4 bg-gray-200 animate-pulse rounded mb-4'></div>
-                                <div className='grid grid-cols-2 gap-3 mb-4'>
-                                    <div className='h-10 bg-gray-200 animate-pulse rounded'></div>
-                                    <div className='h-10 bg-gray-200 animate-pulse rounded'></div>
+                            <CardContent className='p-6'>
+                                <div className='h-6 bg-gray-200 animate-pulse rounded mb-4'></div>
+                                <div className='space-y-4'>
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <div key={i} className='flex justify-between items-center py-2'>
+                                            <div className='h-4 bg-gray-200 animate-pulse rounded w-20'></div>
+                                            <div className='h-4 bg-gray-200 animate-pulse rounded w-16'></div>
+                                        </div>
+                                    ))}
                                 </div>
                             </CardContent>
                         </Card>
@@ -186,20 +237,29 @@ export default function VideoDetailPage() {
     if (error || !video) {
         return (
             <div className='container mx-auto p-6'>
-                <div className='mb-6'>
+                <div className='mb-8'>
                     <Link
                         href='/dashboard'
-                        className='flex items-center gap-2 text-gray-600 hover:text-purple-600 mb-4'
+                        className='inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 mb-6 transition-colors'
                     >
                         <ArrowLeft className='h-4 w-4' />
                         <span>Back to Dashboard</span>
                     </Link>
                 </div>
-                <div className='text-center py-12'>
-                    <h2 className='text-2xl font-bold text-gray-900 mb-2'>Video not found</h2>
-                    <p className='text-gray-500 mb-4'>The video you're looking for could not be found.</p>
+                <div className='max-w-2xl mx-auto text-center py-16'>
+                    <div className='w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center'>
+                        <svg className='w-12 h-12 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m4 0H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zM9 12l2 2 4-4' />
+                        </svg>
+                    </div>
+                    <h2 className='text-3xl font-bold text-gray-900 mb-3'>Video not found</h2>
+                    <p className='text-gray-600 mb-8 text-lg'>
+                        The video you're looking for could not be found or may have been removed.
+                    </p>
                     <Link href='/dashboard'>
-                        <Button>Return to Dashboard</Button>
+                        <Button className='bg-purple-600 hover:bg-purple-700 text-white px-6 py-3'>
+                            Return to Dashboard
+                        </Button>
                     </Link>
                 </div>
             </div>
@@ -208,38 +268,40 @@ export default function VideoDetailPage() {
 
     return (
         <div className='container mx-auto p-6'>
-            <div className='mb-6'>
+            <div className='mb-8'>
                 <Link
                     href='/dashboard'
-                    className='flex items-center gap-2 text-gray-600 hover:text-purple-600 mb-4'
+                    className='inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 mb-6 transition-colors group'
                 >
-                    <ArrowLeft className='h-4 w-4' />
+                    <ArrowLeft className='h-4 w-4 group-hover:-translate-x-1 transition-transform' />
                     <span>Back to Dashboard</span>
                 </Link>
+                
+                {/* Header with title and status */}
                 <div className='flex items-start justify-between'>
-                    <div>
-                        <h1 className='text-3xl font-bold'>{video.title}</h1>
-                        <div className='flex items-center gap-2 text-sm text-gray-500 mt-2'>
-                            <span>{video.views.toLocaleString()} views</span>
-                            <span>•</span>
-                            <span>Created on {formatDate(video.createdAt)}</span>
-                            <span>•</span>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                video.status === 'published' 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                                {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
-                            </span>
-                        </div>
+                    <div className='flex-1'>
+                        <h1 className='text-4xl font-bold text-gray-900 mb-2'>{video.title}</h1>
+                        <p className='text-gray-600 text-lg max-w-2xl'>
+                            {video.description || 'No description available for this video.'}
+                        </p>
+                    </div>
+                    <div className='ml-6 flex items-center gap-3'>
+                        <span className={`px-4 py-2 rounded-full text-sm font-medium ${
+                            video.status === 'published' 
+                                ? 'bg-green-100 text-green-800 border border-green-200' 
+                                : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                        }`}>
+                            {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-                <div className='lg:col-span-2'>
-                    <Card className='overflow-hidden'>
-                        <div className='aspect-video bg-gray-900 relative'>
+            <div className='grid grid-cols-1 xl:grid-cols-4 gap-6'>
+                {/* Main Video Player - Takes up more space */}
+                <div className='xl:col-span-3'>
+                    <Card className='overflow-hidden shadow-lg'>
+                        <div className='aspect-video bg-gray-900 relative group'>
                             {isPlaying ? (
                                 <video 
                                     src={video.videoUrl} 
@@ -270,9 +332,9 @@ export default function VideoDetailPage() {
                                             }
                                         }}
                                     />
-                                    <div className='absolute inset-0 flex items-center justify-center bg-black/20'>
-                                        <div className='w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors'>
-                                            <div className='w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center hover:bg-purple-700 transition-colors'>
+                                    <div className='absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors'>
+                                        <div className='w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 group-hover:scale-110 transition-all duration-200'>
+                                            <div className='w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center group-hover:bg-purple-700 transition-colors shadow-lg'>
                                                 <Play className='h-8 w-8 text-white ml-1' fill="white" />
                                             </div>
                                         </div>
@@ -280,89 +342,185 @@ export default function VideoDetailPage() {
                                 </div>
                             )}
                         </div>
+                        
+                        {/* Video Info Section */}
                         <CardContent className='p-6'>
-                            <h3 className='text-lg font-semibold mb-3'>Description</h3>
-                            <p className='text-gray-700 leading-relaxed'>
-                                {video.description || 'No description available for this video.'}
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div>
-                    <Card>
-                        <CardContent className='p-6 space-y-6'>
-                            <div>
-                                <h3 className='font-semibold text-lg mb-4'>Video Actions</h3>
-                                <div className='grid grid-cols-1 gap-3'>
+                            <div className='flex items-start justify-between mb-4'>
+                                <div className='flex-1'>
+                                    <h2 className='text-2xl font-bold text-gray-900 mb-2'>{video.title}</h2>
+                                    <div className='flex items-center gap-4 text-sm text-gray-600'>
+                                        <div className='flex items-center gap-1'>
+                                            <Eye className='h-4 w-4' />
+                                            <span>{video.views.toLocaleString()} views</span>
+                                        </div>
+                                        <div className='flex items-center gap-1'>
+                                            <Calendar className='h-4 w-4' />
+                                            <span>{formatDate(video.createdAt)}</span>
+                                        </div>
+                                        <div className='flex items-center gap-1'>
+                                            <Hash className='h-4 w-4' />
+                                            <span>#{video.id}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className='flex items-center gap-2 ml-4'>
+                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                        video.status === 'published' 
+                                            ? 'bg-green-100 text-green-800 border border-green-200' 
+                                            : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                    }`}>
+                                        {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Action Buttons */}
+                            <div className='flex items-center gap-3 mb-6 pb-6 border-b relative'>
+                                <div className="relative">
                                     <Button
                                         variant='outline'
-                                        className='w-full flex items-center gap-2'
+                                        className='flex items-center gap-2'
                                         onClick={handleDownload}
                                         disabled={isDownloading}
                                     >
                                         {isDownloading ? (
-                                            <div className="flex flex-col items-center w-full">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                                                    Downloading...
-                                                </div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                                                <span>Downloading...</span>
                                                 {downloadProgress > 0 && (
-                                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                                        <div 
-                                                            className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                                                            style={{ width: `${downloadProgress}%` }}
-                                                        ></div>
-                                                    </div>
+                                                    <span className="text-xs text-gray-500">
+                                                        {downloadProgress}%
+                                                    </span>
                                                 )}
                                             </div>
                                         ) : (
                                             <>
                                                 <Download className='h-4 w-4' />
-                                                Download Video
+                                                Download
                                             </>
                                         )}
                                     </Button>
-                                    
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant='outline'
-                                                className='w-full flex items-center gap-2'
-                                            >
-                                                <Share2 className='h-4 w-4' />
-                                                Share Video
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className='w-full'>
-                                            <DropdownMenuItem onClick={() => {
-                                                const embedUrl = videoService.generateEmbedUrl(video.id);
-                                                navigator.clipboard.writeText(embedUrl).then(() => {
-                                                    toast({
-                                                        title: 'Embed Link Copied',
-                                                        description: 'Embed link has been copied to clipboard.',
-                                                    });
-                                                }).catch(() => {
-                                                    toast({
-                                                        title: 'Copy Failed',
-                                                        description: 'Could not copy embed link.',
-                                                        variant: 'destructive',
-                                                    });
-                                                });
-                                            }}>
-                                                <Youtube className='mr-2 h-4 w-4' />
-                                                <span>Copy Embed Link</span>
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    {isDownloading && downloadProgress > 0 && (
+                                        <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-purple-600 transition-all duration-300 ease-out"
+                                                style={{ width: `${downloadProgress}%` }}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
+                                
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant='outline'
+                                            className='flex items-center gap-2'
+                                        >
+                                            <Share2 className='h-4 w-4' />
+                                            Share
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className='w-56'>
+                                        {/* Share original video */}
+                                        <DropdownMenuItem onClick={handleShare}>
+                                            <LinkIcon className='mr-2 h-4 w-4' />
+                                            <span>Copy Video Link</span>
+                                        </DropdownMenuItem>
+                                        
+                                        <DropdownMenuItem onClick={() => {
+                                            const embedUrl = videoService.generateEmbedUrl(video.id);
+                                            navigator.clipboard.writeText(embedUrl).then(() => {
+                                                toast({
+                                                    title: 'Embed Link Copied',
+                                                    description: 'Embed link has been copied to clipboard.',
+                                                });
+                                            }).catch(() => {
+                                                toast({
+                                                    title: 'Copy Failed',
+                                                    description: 'Could not copy embed link.',
+                                                    variant: 'destructive',
+                                                });
+                                            });
+                                        }}>
+                                            <ExternalLink className='mr-2 h-4 w-4' />
+                                            <span>Copy Embed Link</span>
+                                        </DropdownMenuItem>
 
-                            <div className='pt-4 border-t'>
-                                <h3 className='font-semibold text-lg mb-4'>Video Details</h3>
-                                <div className='space-y-3 text-sm'>
-                                    <div className='flex justify-between'>
-                                        <span className='text-gray-500'>Status:</span>
+                                        {/* Show published video links if available */}
+                                        {video.publishedVideos && video.publishedVideos.length > 0 && (
+                                            <>
+                                                <div className="border-t my-1"></div>
+                                                <div className="px-2 py-1 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                                    Published Videos
+                                                </div>
+                                                {video.publishedVideos.map((publishedVideo) => (
+                                                    <DropdownMenuItem 
+                                                        key={publishedVideo.id}
+                                                        onClick={() => handleSharePublished(publishedVideo)}
+                                                    >
+                                                        <span className='mr-2 text-sm'>
+                                                            {videoService.getPlatformIcon(publishedVideo.platform)}
+                                                        </span>
+                                                        <span>Share from {videoService.formatPlatformName(publishedVideo.platform)}</span>
+                                                    </DropdownMenuItem>
+                                                ))}
+                                            </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <Button variant='outline' className='flex items-center gap-2'>
+                                    <Edit className='h-4 w-4' />
+                                    Edit
+                                </Button>
+                            </div>
+                            
+                            {/* Description */}
+                            <div>
+                                <h3 className='text-lg font-semibold mb-3 text-gray-900'>Description</h3>
+                                <p className='text-gray-700 leading-relaxed'>
+                                    {video.description || 'No description available for this video.'}
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Sidebar with Video Info and Actions */}
+                <div className='xl:col-span-1 space-y-6'>
+                    {/* Video Statistics */}
+                    <Card>
+                        <CardContent className='p-6'>
+                            <h3 className='font-semibold text-lg mb-4 text-gray-900'>Video Statistics</h3>
+                            <div className='space-y-4'>
+                                <div className='flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0'>
+                                    <div className='flex items-center gap-2 text-gray-600'>
+                                        <Eye className='h-4 w-4' />
+                                        <span className='text-sm'>Total Views</span>
+                                    </div>
+                                    <span className='font-semibold text-gray-900'>{video.views.toLocaleString()}</span>
+                                </div>
+                                <div className='flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0'>
+                                    <div className='flex items-center gap-2 text-gray-600'>
+                                        <Calendar className='h-4 w-4' />
+                                        <span className='text-sm'>Created</span>
+                                    </div>
+                                    <span className='font-semibold text-gray-900'>{formatDate(video.createdAt)}</span>
+                                </div>
+                                <div className='flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0'>
+                                    <div className='flex items-center gap-2 text-gray-600'>
+                                        <Hash className='h-4 w-4' />
+                                        <span className='text-sm'>Video ID</span>
+                                    </div>
+                                    <span className='font-semibold text-gray-900'>#{video.id}</span>
+                                </div>
+                                    <div className='flex items-center justify-between py-2'>
+                                        <div className='flex items-center gap-2 text-gray-600'>
+                                            <div className={`h-4 w-4 rounded-full ${
+                                                video.status === 'published' ? 'bg-green-500' : 'bg-yellow-500'
+                                            }`}></div>
+                                            <span className='text-sm'>Status</span>
+                                        </div>
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                             video.status === 'published' 
                                                 ? 'bg-green-100 text-green-800' 
@@ -371,73 +529,136 @@ export default function VideoDetailPage() {
                                             {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
                                         </span>
                                     </div>
-                                    <div className='flex justify-between'>
-                                        <span className='text-gray-500'>Views:</span>
-                                        <span className='font-medium'>{video.views.toLocaleString()}</span>
-                                    </div>
-                                    <div className='flex justify-between'>
-                                        <span className='text-gray-500'>Created:</span>
-                                        <span className='font-medium'>{formatDate(video.createdAt)}</span>
-                                    </div>
-                                    <div className='flex justify-between'>
-                                        <span className='text-gray-500'>Video ID:</span>
-                                        <span className='font-medium'>#{video.id}</span>
-                                    </div>
-                                </div>
                             </div>
+                        </CardContent>
+                    </Card>
 
-                            {video.status === 'published' && (
-                                <div className='pt-4 border-t'>
-                                    <h3 className='font-semibold text-lg mb-4'>Publishing</h3>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant='outline'
-                                                className='w-full'
-                                            >
-                                                Publish to Platform
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className='w-full'>
-                                            <DropdownMenuItem>
-                                                <Youtube className='mr-2 h-4 w-4' />
-                                                <span>YouTube</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem>
-                                                <TikTok className='mr-2 h-4 w-4' />
-                                                <span>TikTok</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem>
-                                                <Instagram className='mr-2 h-4 w-4' />
-                                                <span>Instagram</span>
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                    {/* Published Videos Section */}
+                    {video.publishedVideos && video.publishedVideos.length > 0 && (
+                        <Card>
+                            <CardContent className='p-6'>
+                                <h3 className='font-semibold text-lg mb-4 text-gray-900'>Published on Platforms</h3>
+                                <div className='space-y-4'>
+                                    {video.publishedVideos.map((publishedVideo) => (
+                                        <div key={publishedVideo.id} className='p-4 bg-gradient-to-r from-gray-50 to-gray-25 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow'>
+                                            <div className='flex items-center justify-between mb-3'>
+                                                <div className='flex items-center gap-3'>
+                                                    <div className='w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm'>
+                                                        <span className='text-lg'>
+                                                            {videoService.getPlatformIcon(publishedVideo.platform)}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <div className='font-medium text-gray-900'>
+                                                            {videoService.formatPlatformName(publishedVideo.platform)}
+                                                        </div>
+                                                        <div className='text-xs text-gray-500'>
+                                                            {publishedVideo.externalId && `ID: ${publishedVideo.externalId}`}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => handleSharePublished(publishedVideo)}
+                                                    className="h-8 px-3 text-xs"
+                                                >
+                                                    <Share2 className='h-3 w-3 mr-1' />
+                                                    Share
+                                                </Button>
+                                            </div>
+                                            
+                                            <div className='space-y-2 text-sm'>
+                                                <div className='flex items-center justify-between'>
+                                                    <span className='text-gray-600'>Views:</span>
+                                                    <span className='font-medium text-gray-900'>{publishedVideo.views}</span>
+                                                </div>
+                                                {publishedVideo.publishedAt && (
+                                                    <div className='flex items-center justify-between'>
+                                                        <span className='text-gray-600'>Published:</span>
+                                                        <span className='font-medium text-gray-900'>{formatDate(publishedVideo.publishedAt)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {publishedVideo.url && (
+                                                <div className='mt-3 pt-3 border-t border-gray-200'>
+                                                    <a
+                                                        href={publishedVideo.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className='inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors'
+                                                    >
+                                                        <ExternalLink className='h-4 w-4' />
+                                                        View on {videoService.formatPlatformName(publishedVideo.platform)}
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
-                            )}
+                            </CardContent>
+                        </Card>
+                    )}
 
-                            {video.status === 'draft' && (
-                                <div className='pt-4 border-t'>
-                                    <h3 className='font-semibold text-lg mb-4'>Draft Actions</h3>
-                                    <div className='space-y-3'>
-                                        <Button className='w-full'>
-                                            Publish Video
+                    {/* Publishing Actions */}
+                    {video.status === 'published' && (
+                        <Card>
+                            <CardContent className='p-6'>
+                                <h3 className='font-semibold text-lg mb-4 text-gray-900'>Publish to New Platform</h3>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button className='w-full' variant='outline'>
+                                            <span className='mr-2'>+</span>
+                                            Publish to Platform
                                         </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className='w-full'>
+                                        <DropdownMenuItem>
+                                            <Youtube className='mr-2 h-4 w-4 text-red-600' />
+                                            <span>YouTube</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <TikTok className='mr-2 h-4 w-4' />
+                                            <span>TikTok</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <Instagram className='mr-2 h-4 w-4 text-pink-600' />
+                                            <span>Instagram</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </CardContent>
+                        </Card>
+                    )}
 
-                    {/* Video URL Card for debugging/development */}
-                    <Card className='mt-6'>
-                        <CardContent className='p-4'>
-                            <h3 className='font-medium mb-2'>Video URL</h3>
-                            <div className='text-xs text-gray-500 break-all bg-gray-50 p-2 rounded'>
-                                {video.videoUrl}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Publish Actions for Draft Videos */}
+                    {video.status === 'private' && (
+                        <Card>
+                            <CardContent className='p-6'>
+                                <h3 className='font-semibold text-lg mb-4 text-gray-900'>Ready to Publish?</h3>
+                                <p className='text-sm text-gray-600 mb-4'>
+                                    Your video is ready to be published to various platforms.
+                                </p>
+                                <Button className='w-full bg-purple-600 hover:bg-purple-700'>
+                                    <span className='mr-2'>🚀</span>
+                                    Publish Video
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Developer Info - Only show in development */}
+                    {process.env.NODE_ENV === 'development' && (
+                        <Card className='border-dashed border-gray-300'>
+                            <CardContent className='p-4'>
+                                <h3 className='font-medium mb-2 text-gray-700 text-sm'>Development Info</h3>
+                                <div className='text-xs text-gray-500 break-all bg-gray-50 p-2 rounded font-mono'>
+                                    {video.videoUrl}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>

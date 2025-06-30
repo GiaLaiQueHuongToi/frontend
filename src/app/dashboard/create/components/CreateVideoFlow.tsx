@@ -114,14 +114,11 @@ export function CreateVideoFlow() {
 
                             try {
                                 const outline =
-                                    await scriptGeneration.generateVideoOutline(
-                                        {
-                                            description:
-                                                selectedTopic ||
-                                                videoDescription,
-                                            targetAudience,
-                                            videoGoal,
-                                        }
+                                    await scriptGeneration.generateScript(
+                                        selectedTopic || videoDescription,
+                                        targetAudience,
+                                        videoGoal,
+                                        60
                                     );
 
                                 if (outline) {

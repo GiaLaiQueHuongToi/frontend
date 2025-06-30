@@ -1,7 +1,6 @@
 // Re-export from geminiService for convenience
 import type {
     ImageGenerationResult as BaseImageGenerationResult,
-    VideoOutlineRequest,
     VideoOutlineResponse,
 } from '@/services/GeminiService';
 
@@ -11,7 +10,7 @@ export interface ImageGenerationResult extends BaseImageGenerationResult {
     delay: number; // Delay in milliseconds for loading
 }
 
-export type { VideoOutlineRequest, VideoOutlineResponse };
+export type { VideoOutlineResponse };
 
 export interface VideoCreationState {
     currentStep: number;

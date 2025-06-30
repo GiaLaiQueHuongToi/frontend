@@ -29,11 +29,12 @@ export function ContentScriptStep({
         }
 
         try {
-            const outline = await scriptGeneration.generateVideoOutline({
-                description: state.selectedTopic || state.videoDescription,
-                targetAudience: state.targetAudience,
-                videoGoal: state.videoGoal,
-            });
+            const outline = await scriptGeneration.generateScript(
+                state.selectedTopic || state.videoDescription,
+                state.targetAudience,
+                state.videoGoal,
+                60
+            );
 
             if (outline) {
                 onUpdateState({ generatedSummary: outline.contentSummary });
@@ -49,6 +50,7 @@ export function ContentScriptStep({
         await scriptGeneration.regenerateScript(
             state.selectedTopic || state.videoDescription,
             state.targetAudience,
+            state.videoGoal,
             scriptGeneration.videoOutline?.estimatedDuration || 60
         );
     };

@@ -5,19 +5,22 @@ import { useToast } from '@/components/ui/use-toast';
 import { geminiService } from '@/services/GeminiService';
 import type {
     ScriptGenerationState,
-    VideoOutlineRequest,
     VideoOutlineResponse,
 } from '@/types/video-creation';
 
 export interface ScriptGeneration {
     videoOutline: VideoOutlineResponse | null;
     isGeneratingOutline: boolean;
-    generateVideoOutline: (
-        request: VideoOutlineRequest
+    generateScript: (
+        topic: string,
+        audience?: string,
+        goal?: string,
+        duration?: number
     ) => Promise<VideoOutlineResponse>;
     regenerateScript: (
         topic: string,
         audience: string,
+        goal: string,
         duration?: number
     ) => Promise<void>;
     updateScriptItem: (id: number, newText: string) => void;
@@ -31,18 +34,23 @@ export function useScriptGeneration(): ScriptGeneration {
         isGeneratingOutline: false,
     });
 
-    const generateVideoOutline = async (request: VideoOutlineRequest) => {
+    const generateScript = async (
+        topic: string,
+        audience: string = 'general audience',
+        goal: string = 'inform and engage',
+        duration: number = 60
+    ) => {
         setState((prev) => ({ ...prev, isGeneratingOutline: true }));
 
         try {
             toast({
-                title: 'Generating video outline with Gemini AI',
-                description: 'Creating script segments and video structure...',
+                title: 'Generating video script with Gemini AI',
+                description: `Creating script for "${topic}"...`,
             });
 
-            console.log('Generating video outline with request:', request);
+            console.log('Generating video script for topic:', topic);
 
-            const outline = await geminiService.generateVideoOutline(request);
+            const outline = await geminiService.generateScript(topic, audience, goal, duration);
 
             setState((prev) => ({ ...prev, videoOutline: outline }));
 
@@ -71,6 +79,7 @@ export function useScriptGeneration(): ScriptGeneration {
     const regenerateScript = async (
         topic: string,
         audience: string,
+        goal: string,
         duration: number = 60
     ) => {
         if (!topic) {
@@ -88,6 +97,7 @@ export function useScriptGeneration(): ScriptGeneration {
             const scriptSections = await geminiService.generateScript(
                 topic,
                 audience || 'general public',
+                goal,
                 duration
             );
 
@@ -140,7 +150,7 @@ export function useScriptGeneration(): ScriptGeneration {
 
     return {
         ...state,
-        generateVideoOutline,
+        generateScript,
         regenerateScript,
         updateScriptItem,
     };
