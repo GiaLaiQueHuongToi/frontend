@@ -25,6 +25,7 @@ import { VideoStyleStep } from './VideoStyleStep';
 import { ImageGenerationSection } from '@/components/video-creation/ImageGenerationSection';
 import { VoiceGenerationStep } from './VoiceGenerationStep';
 import { VideoGenerationStep } from './VideoGenerationStep';
+import { CaptionedVideoStep } from './CaptionedVideoStep';
 import { PreviewFinalizeStep } from './PreviewFinalizeStep';
 import type { GeneratedSegment } from '@/types/video-creation';
 
@@ -38,6 +39,15 @@ export function CreateVideoFlow() {
 
     // Video generation status for step 7 validation
     const [hasGeneratedVideo, setHasGeneratedVideo] = useState(false);
+
+    // Generated video blob for passing between steps 7 and 8
+    const [generatedVideoBlob, setGeneratedVideoBlob] = useState<Blob | null>(
+        null
+    );
+
+    // Final captioned video blob from step 8 for step 9 preview
+    const [finalCaptionedVideoBlob, setFinalCaptionedVideoBlob] =
+        useState<Blob | null>(null);
 
     // Track previous step to handle audio clearing logic
     const previousStepRef = useRef<number>(0);
@@ -78,6 +88,10 @@ export function CreateVideoFlow() {
     useEffect(() => {
         if (currentStep !== 7) {
             setHasGeneratedVideo(false);
+        }
+        // Reset video blob when navigating away from steps 7 and 8
+        if (currentStep < 7) {
+            setGeneratedVideoBlob(null);
         }
     }, [currentStep]);
 
@@ -221,18 +235,36 @@ export function CreateVideoFlow() {
             case 7:
                 return (
                     <VideoGenerationStep
-                        onFinish={handleNextStep}
+                        onFinish={(videoBlob) => {
+                            setGeneratedVideoBlob(videoBlob || null);
+                            handleNextStep();
+                        }}
                         segments={segments}
-                        onVideoGenerated={setHasGeneratedVideo}
+                        onVideoGenerated={(hasVideo, videoBlob) => {
+                            setHasGeneratedVideo(hasVideo);
+                            setGeneratedVideoBlob(videoBlob || null);
+                        }}
                     />
                 );
 
             case 8:
                 return (
+                    <CaptionedVideoStep
+                        videoBlob={generatedVideoBlob}
+                        onFinish={handleNextStep}
+                        onCaptionedVideoGenerated={setFinalCaptionedVideoBlob}
+                    />
+                );
+
+            case 9:
+                return (
                     <PreviewFinalizeStep
                         state={videoCreation}
                         onUpdateState={updateState}
                         onFinish={handleFinishVideo}
+                        finalVideoBlob={
+                            finalCaptionedVideoBlob || generatedVideoBlob
+                        }
                     />
                 );
 
@@ -258,6 +290,8 @@ export function CreateVideoFlow() {
             case 7:
                 return 'Video Generation';
             case 8:
+                return 'Audio & Captions';
+            case 9:
                 return 'Preview & Finalize';
             default:
                 return 'Create Video';
@@ -281,6 +315,8 @@ export function CreateVideoFlow() {
             case 7:
                 return 'Generate your final video from segments';
             case 8:
+                return 'Replace audio and add captions to your video';
+            case 9:
                 return 'Preview your video and make final adjustments';
             default:
                 return 'Follow the steps to create your AI-powered short video';
@@ -304,11 +340,18 @@ export function CreateVideoFlow() {
                 return true; // Image generation is optional
             case 6:
                 // Require at least one segment with audio to proceed
-                return !!language && segments.length > 0 && segments.some(s => s.audioUrl);
+                return (
+                    !!language &&
+                    segments.length > 0 &&
+                    segments.some((s) => s.audioUrl)
+                );
             case 7:
                 // Require video to be generated to proceed
                 return hasGeneratedVideo;
             case 8:
+                // Audio and captions step - can proceed without changes
+                return true;
+            case 9:
                 return true; // Final step
             default:
                 return true;
@@ -342,16 +385,16 @@ export function CreateVideoFlow() {
                     <div className='mb-8'>
                         <div className='flex items-center justify-between mb-2'>
                             <span className='text-sm text-gray-600'>
-                                Step {currentStep} of 8
+                                Step {currentStep} of 9
                             </span>
                             <span className='text-sm text-gray-600'>
-                                {Math.round((currentStep / 8) * 100)}% Complete
+                                {Math.round((currentStep / 9) * 100)}% Complete
                             </span>
                         </div>
                         <div className='w-full bg-gray-200 rounded-full h-2'>
                             <div
                                 className='bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-500'
-                                style={{ width: `${(currentStep / 8) * 100}%` }}
+                                style={{ width: `${(currentStep / 9) * 100}%` }}
                             ></div>
                         </div>
                     </div>
@@ -379,15 +422,17 @@ export function CreateVideoFlow() {
                                 Previous
                             </Button>
                             <Button
-                                onClick={
-                                    currentStep === 8
-                                        ? handleFinishVideo
-                                        : handleNextStep
-                                }
+                                onClick={() => {
+                                    if (currentStep === 9) {
+                                        handleFinishVideo();
+                                    } else {
+                                        handleNextStep();
+                                    }
+                                }}
                                 disabled={!isStepValid() || isLoading}
                                 className='gap-2'
                             >
-                                {currentStep === 8 ? 'Finish' : 'Next'}
+                                {currentStep === 9 ? 'Finish' : 'Next'}
                                 <ArrowRight className='h-4 w-4' />
                             </Button>
                         </CardFooter>

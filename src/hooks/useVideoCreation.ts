@@ -40,12 +40,14 @@ export function useVideoCreation() {
         setState((prev) => ({ ...prev, currentStep: prev.currentStep - 1 }));
     };
 
-    const handleFinishVideo = () => {
-        toast({
-            title: 'Video Created Successfully!',
-            description: 'Your video has been saved to your dashboard.',
-        });
-        router.push('/dashboard');
+    const handleFinishVideo = (videoId?: number) => {
+        // If a video ID is provided, redirect to the video detail page
+        if (videoId) {
+            router.push(`/dashboard/video/${videoId}`);
+        } else {
+            // Fallback to dashboard if no video ID
+            router.push('/dashboard');
+        }
     };
 
     const getVideoContext = () => ({

@@ -1,5 +1,12 @@
 import Axios from '@/config/Axios';
 
+export interface CreateVideoRequest {
+    title: string;
+    videoUrl: string;
+    status: 'private' | 'published';
+    description: string;
+}
+
 export interface PublishedVideoResponse {
     id: number;
     title: string;
@@ -46,17 +53,26 @@ export class VideoService {
     generateThumbnailUrl(videoUrl: string): string {
         try {
             // Check if it's a Cloudinary URL
-            if (videoUrl.includes('cloudinary.com') && videoUrl.includes('/video/upload/')) {
+            if (
+                videoUrl.includes('cloudinary.com') &&
+                videoUrl.includes('/video/upload/')
+            ) {
                 // Method 1: Auto-select best frame
                 const autoThumbnail = videoUrl
-                    .replace('/video/upload/', '/video/upload/so_auto,w_400,h_225,c_fill,f_jpg/')
+                    .replace(
+                        '/video/upload/',
+                        '/video/upload/so_auto,w_400,h_225,c_fill,f_jpg/'
+                    )
                     .replace('.mp4', '.jpg');
-                
+
                 // Method 2: Get frame at 1 second (fallback)
                 const timeThumbnail = videoUrl
-                    .replace('/video/upload/', '/video/upload/so_1.0,w_400,h_225,c_fill,f_jpg/')
+                    .replace(
+                        '/video/upload/',
+                        '/video/upload/so_1.0,w_400,h_225,c_fill,f_jpg/'
+                    )
                     .replace('.mp4', '.jpg');
-                
+
                 // Try auto first, if it fails the onError will handle fallback to placeholder
                 return autoThumbnail;
             }
@@ -68,11 +84,20 @@ export class VideoService {
     }
 
     // Alternative method to get thumbnail at specific time
-    generateThumbnailAtTime(videoUrl: string, timeInSeconds: number = 1.0): string {
+    generateThumbnailAtTime(
+        videoUrl: string,
+        timeInSeconds: number = 1.0
+    ): string {
         try {
-            if (videoUrl.includes('cloudinary.com') && videoUrl.includes('/video/upload/')) {
+            if (
+                videoUrl.includes('cloudinary.com') &&
+                videoUrl.includes('/video/upload/')
+            ) {
                 return videoUrl
-                    .replace('/video/upload/', `/video/upload/so_${timeInSeconds},w_400,h_225,c_fill,f_jpg/`)
+                    .replace(
+                        '/video/upload/',
+                        `/video/upload/so_${timeInSeconds},w_400,h_225,c_fill,f_jpg/`
+                    )
                     .replace('.mp4', '.jpg');
             }
             return '/placeholder-video.svg';
@@ -82,11 +107,14 @@ export class VideoService {
         }
     }
 
-    async getAllVideos(page: number = 0, size: number = 10): Promise<PageResponse<VideoResponse>> {
+    async getAllVideos(
+        page: number = 0,
+        size: number = 10
+    ): Promise<PageResponse<VideoResponse>> {
         try {
-            const response = await Axios.get<ApiResponse<PageResponse<VideoResponse>>>(
-                `${this.baseUrl}?page=${page}&size=${size}`
-            );
+            const response = await Axios.get<
+                ApiResponse<PageResponse<VideoResponse>>
+            >(`${this.baseUrl}?page=${page}&size=${size}`);
             return response.data.data;
         } catch (error) {
             console.error('❌ Error fetching videos:', error);
@@ -96,7 +124,9 @@ export class VideoService {
 
     async getVideoById(id: number): Promise<VideoResponse> {
         try {
-            const response = await Axios.get<ApiResponse<VideoResponse>>(`${this.baseUrl}/${id}`);
+            const response = await Axios.get<ApiResponse<VideoResponse>>(
+                `${this.baseUrl}/${id}`
+            );
             return response.data.data;
         } catch (error) {
             console.error('Error fetching video:', error);
@@ -104,13 +134,30 @@ export class VideoService {
         }
     }
 
+    // Create a new video
+    async createVideo(request: CreateVideoRequest): Promise<VideoResponse> {
+        try {
+            const response = await Axios.post<ApiResponse<VideoResponse>>(
+                this.baseUrl,
+                request
+            );
+            return response.data.data;
+        } catch (error) {
+            console.error('Error creating video:', error);
+            throw error;
+        }
+    }
+
     // Download video from Cloudinary URL
-    async downloadVideo(video: VideoResponse, onProgress?: (progress: number) => void): Promise<boolean> {
+    async downloadVideo(
+        video: VideoResponse,
+        onProgress?: (progress: number) => void
+    ): Promise<boolean> {
         try {
             // Try blob download method first for better control
             const success = await this.downloadVideoAsBlob(video, onProgress);
             if (success) return true;
-            
+
             // Fallback to direct link method
             return this.downloadVideoDirectLink(video);
         } catch (error) {
@@ -120,7 +167,10 @@ export class VideoService {
     }
 
     // Download video as blob for better control with progress tracking
-    private async downloadVideoAsBlob(video: VideoResponse, onProgress?: (progress: number) => void): Promise<boolean> {
+    private async downloadVideoAsBlob(
+        video: VideoResponse,
+        onProgress?: (progress: number) => void
+    ): Promise<boolean> {
         try {
             // Fetch the video with progress tracking
             const response = await fetch(video.videoUrl);
@@ -139,16 +189,16 @@ export class VideoService {
             }
 
             const chunks: Uint8Array[] = [];
-            
+
             while (true) {
                 const { done, value } = await reader.read();
-                
+
                 if (done) break;
-                
+
                 if (value) {
                     chunks.push(value);
                     loaded += value.length;
-                    
+
                     // Report progress if callback provided
                     if (onProgress && total > 0) {
                         const progress = (loaded / total) * 100;
@@ -158,25 +208,25 @@ export class VideoService {
             }
 
             // Combine all chunks into a single blob
-            const blob = new Blob(chunks, { type: 'video/mp4' });
-            
+            const blob = new Blob(chunks as BlobPart[], { type: 'video/mp4' });
+
             // Create blob URL
             const blobUrl = window.URL.createObjectURL(blob);
-            
+
             // Create download link
             const link = document.createElement('a');
             link.href = blobUrl;
             link.download = this.sanitizeFilename(`${video.title}.mp4`);
             link.style.display = 'none';
-            
+
             // Trigger download
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             // Clean up blob URL
             window.URL.revokeObjectURL(blobUrl);
-            
+
             return true;
         } catch (error) {
             console.error('Blob download failed:', error);
@@ -188,33 +238,39 @@ export class VideoService {
     private downloadVideoDirectLink(video: VideoResponse): boolean {
         try {
             let downloadUrl = video.videoUrl;
-            
+
             // For Cloudinary URLs, add fl_attachment parameter to force download
             if (video.videoUrl.includes('cloudinary.com')) {
                 // Check if URL has the standard Cloudinary structure
                 if (video.videoUrl.includes('/video/upload/')) {
                     // Insert fl_attachment into the transformation path
-                    downloadUrl = video.videoUrl.replace('/video/upload/', '/video/upload/fl_attachment/');
+                    downloadUrl = video.videoUrl.replace(
+                        '/video/upload/',
+                        '/video/upload/fl_attachment/'
+                    );
                 } else {
                     // If no standard structure, add as query parameter
-                    downloadUrl = video.videoUrl + (video.videoUrl.includes('?') ? '&' : '?') + 'fl_attachment=true';
+                    downloadUrl =
+                        video.videoUrl +
+                        (video.videoUrl.includes('?') ? '&' : '?') +
+                        'fl_attachment=true';
                 }
             }
-            
+
             // Create a temporary anchor element to trigger download
             const link = document.createElement('a');
             link.href = downloadUrl;
             link.download = this.sanitizeFilename(`${video.title}.mp4`);
-            
+
             // These attributes ensure it downloads rather than navigating
             link.rel = 'noopener noreferrer';
             link.style.display = 'none';
-            
+
             // Append to body, click, and remove
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             return true;
         } catch (error) {
             console.error('Direct link download failed:', error);
@@ -234,7 +290,7 @@ export class VideoService {
     async shareVideo(videoId: number): Promise<boolean> {
         try {
             const shareUrl = this.generateShareLink(videoId);
-            
+
             if (navigator.clipboard && window.isSecureContext) {
                 // Use modern clipboard API if available
                 await navigator.clipboard.writeText(shareUrl);
@@ -270,10 +326,12 @@ export class VideoService {
     }
 
     // Share published video from specific platform
-    async sharePublishedVideo(publishedVideo: PublishedVideoResponse): Promise<boolean> {
+    async sharePublishedVideo(
+        publishedVideo: PublishedVideoResponse
+    ): Promise<boolean> {
         try {
             const shareUrl = publishedVideo.url; // Use the platform URL
-            
+
             if (navigator.clipboard && window.isSecureContext) {
                 await navigator.clipboard.writeText(shareUrl);
                 return true;
@@ -294,7 +352,7 @@ export class VideoService {
     // Get platform-specific share text
     getPlatformShareText(publishedVideo: PublishedVideoResponse): string {
         const baseText = `Check out this video: ${publishedVideo.title}`;
-        
+
         switch (publishedVideo.platform.toLowerCase()) {
             case 'youtube':
                 return `🎬 ${baseText}\n${publishedVideo.url}`;
@@ -310,7 +368,10 @@ export class VideoService {
     }
 
     // Share video using native Web Share API with platform-specific content
-    async shareVideoNative(video: VideoResponse, publishedVideo?: PublishedVideoResponse): Promise<boolean> {
+    async shareVideoNative(
+        video: VideoResponse,
+        publishedVideo?: PublishedVideoResponse
+    ): Promise<boolean> {
         try {
             if (!navigator.share) {
                 return false; // Web Share API not available
@@ -329,7 +390,9 @@ export class VideoService {
                 // Share the original video
                 shareData = {
                     title: video.title,
-                    text: video.description || `Check out this video: ${video.title}`,
+                    text:
+                        video.description ||
+                        `Check out this video: ${video.title}`,
                     url: this.generateShareLink(video.id),
                 };
             }
@@ -398,10 +461,10 @@ export class VideoService {
             document.body.appendChild(textArea);
             textArea.focus();
             textArea.select();
-            
+
             const successful = document.execCommand('copy');
             document.body.removeChild(textArea);
-            
+
             return successful;
         } catch (error) {
             console.error('Fallback copy failed:', error);
