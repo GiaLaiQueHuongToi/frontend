@@ -36,6 +36,7 @@ export const googleOAuthService = {
         try {
             const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
             const clientSecret = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET;
+            const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL;
 
             if (!clientId || !clientSecret) {
                 throw new Error('Google OAuth credentials not configured');
@@ -46,7 +47,7 @@ export const googleOAuthService = {
             params.append('code', code);
             params.append(
                 'redirect_uri',
-                'http://localhost:8081/auth/grantcode'
+                frontendUrl + '/auth/grantcode'
             );
             params.append('client_id', clientId);
             params.append('client_secret', clientSecret);
@@ -93,6 +94,7 @@ export const googleOAuthService = {
                 scope: tokenData.scope,
             };
 
+            
             const response = await Axios.post(
                 '/auth/store-token',
                 storeRequest

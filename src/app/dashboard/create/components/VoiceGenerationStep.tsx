@@ -215,13 +215,13 @@ export function VoiceGenerationStep({ imageState, state, onUpdateState, onSegmen
                         onValueChange={handleLanguageChange}
                         className='flex gap-4'
                     >
-                        <div className='flex items-center space-x-2'>
+                        {/* <div className='flex items-center space-x-2'>
                             <RadioGroupItem
                                 value='vietnamese'
                                 id='vietnamese'
                             />
                             <Label htmlFor='vietnamese'>Vietnamese</Label>
-                        </div>
+                        </div> */}
                         <div className='flex items-center space-x-2'>
                             <RadioGroupItem value='english' id='english' />
                             <Label htmlFor='english'>English</Label>

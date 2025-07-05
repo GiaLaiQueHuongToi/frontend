@@ -46,7 +46,7 @@ Axios.interceptors.request.use((config) => {
         const token = localStorage.getItem('accessToken');
 
         // Don't add Authorization header for auth endpoints (login, register)
-        const isAuthEndpoint = config.url?.includes('/auth/');
+        const isAuthEndpoint = config.url?.includes('/auth/login') || config.url?.includes('/auth/register');
 
         if (token && !isAuthEndpoint) {
             config.headers['Authorization'] = `Bearer ${token}`;
