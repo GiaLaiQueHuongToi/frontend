@@ -28,6 +28,7 @@ export function useAuth(): UseAuth {
 
   // Check authentication status on mount
   useEffect(() => {
+    console.log('component mounted, checking auth status...');
     checkAuth();
   }, []);
 
@@ -78,6 +79,7 @@ export function useAuth(): UseAuth {
 
   // Add this to your existing useAuth hook
   const checkYouTubeConnection = async () => {
+    console.log('checkYouTubeConnection called');
     try {
       // First, check if YouTube access token exists in localStorage
       const youtubeToken = localStorage.getItem('youtubeAccessToken');
@@ -110,7 +112,7 @@ export function useAuth(): UseAuth {
       }
 
       // Token not in localStorage or invalid, check server
-      console.log('YouTube token not found locally, checking server...');
+      console.log('call api to get YouTube access token from server');
       const response = await Axios.get('/auth/youtube-access-token');
       
       // Assuming server returns: { code: 1000, data: { accessToken: "token_value" } }
@@ -125,13 +127,13 @@ export function useAuth(): UseAuth {
       }
       
     } catch (error: any) {
-      console.warn('Could not check YouTube connection status:', error);
+      // console.warn('Could not check YouTube connection status:', error);
       
       // Handle specific error cases
       if (error.response?.status === 404) {
-        console.log('YouTube token not found on server');
+        // console.log('YouTube token not found on server');
       } else if (error.response?.status === 401) {
-        console.log('User not authenticated for YouTube token check');
+        // console.log('User not authenticated for YouTube token check');
       }
       
       setIsYouTubeConnected(false);
@@ -142,10 +144,10 @@ export function useAuth(): UseAuth {
     try {
       setIsLoading(true);
       
-      console.log('Attempting login with credentials:', credentials);
+      // console.log('Attempting login with credentials:', credentials);
       await authService.login(credentials);
 
-      console.log('Login successful, fetching user profile...');
+      // console.log('Login successful, fetching user profile...');
       // Update state
       setIsAuthenticated(true);
       
@@ -164,7 +166,7 @@ export function useAuth(): UseAuth {
       }
 
       // Check YouTube connection
-      await checkYouTubeConnection();
+      // await checkYouTubeConnection();
 
       toast({
         title: 'Login successful!',

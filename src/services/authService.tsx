@@ -85,10 +85,10 @@ export const authService = {
         const token = response.data.data.token;
         
         // Store token in localStorage
-        console.log('Login successful, storing token:', token);
+        // console.log('Login successful, storing token:', token);
 
         localStorage.setItem('accessToken', token);
-        console.log('Stored token in the localstorage', localStorage.getItem('accessToken'));
+        // console.log('Stored token in the localstorage', localStorage.getItem('accessToken'));
         localStorage.setItem('username', credentials.username);
         localStorage.setItem('isAuthenticated', 'true');
         

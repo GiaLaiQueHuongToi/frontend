@@ -1,13 +1,13 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
 // Debug environment variable
-console.log('🔧 Environment Check:', {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NODE_ENV: process.env.NODE_ENV,
-    allEnvVars: Object.keys(process.env).filter((key) =>
-        key.startsWith('NEXT_PUBLIC_')
-    ),
-});
+// console.log('🔧 Environment Check:', {
+//     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+//     NODE_ENV: process.env.NODE_ENV,
+//     allEnvVars: Object.keys(process.env).filter((key) =>
+//         key.startsWith('NEXT_PUBLIC_')
+//     ),
+// });
 
 const Axios: AxiosInstance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -21,25 +21,25 @@ const Axios: AxiosInstance = axios.create({
 Axios.interceptors.request.use((config) => {
     // Log all outgoing API calls with full URL
     const fullURL = `${config.baseURL}${config.url}`;
-    console.log('🚀 API Request:', {
-        method: config.method?.toUpperCase(),
-        baseURL: config.baseURL,
-        endpoint: config.url,
-        fullURL: fullURL,
-        headers: config.headers,
-        data: config.data,
-        timestamp: new Date().toISOString(),
-    });
+    // console.log('🚀 API Request:', {
+    //     method: config.method?.toUpperCase(),
+    //     baseURL: config.baseURL,
+    //     endpoint: config.url,
+    //     fullURL: fullURL,
+    //     headers: config.headers,
+    //     data: config.data,
+    //     timestamp: new Date().toISOString(),
+    // });
 
     // For login endpoint, add extra debugging
     if (config.url?.includes('/auth/login')) {
-        console.log('🔐 Login Request Details:', {
-            url: fullURL,
-            method: config.method,
-            headers: config.headers,
-            body: JSON.stringify(config.data),
-            contentType: config.headers['Content-Type'],
-        });
+        // console.log('🔐 Login Request Details:', {
+        //     url: fullURL,
+        //     method: config.method,
+        //     headers: config.headers,
+        //     body: JSON.stringify(config.data),
+        //     contentType: config.headers['Content-Type'],
+        // });
     }
 
     if (typeof window !== 'undefined') {
@@ -63,25 +63,25 @@ Axios.interceptors.request.use((config) => {
 // Add response interceptor for error handling
 Axios.interceptors.response.use(
     (response) => {
-        console.log('✅ API Success:', {
-            status: response.status,
-            url: response.config.url,
-            method: response.config.method,
-        });
+        // console.log('✅ API Success:', {
+        //     status: response.status,
+        //     url: response.config.url,
+        //     method: response.config.method,
+        // });
         return response;
     },
     (error: AxiosError) => {
-        console.error('❌ API Error Details:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            url: error.config?.url,
-            method: error.config?.method?.toUpperCase(),
-            requestHeaders: error.config?.headers,
-            requestData: error.config?.data,
-            responseHeaders: error.response?.headers,
-            responseData: error.response?.data,
-            message: error.message,
-        });
+        // console.error('❌ API Error Details:', {
+        //     status: error.response?.status,
+        //     statusText: error.response?.statusText,
+        //     url: error.config?.url,
+        //     method: error.config?.method?.toUpperCase(),
+        //     requestHeaders: error.config?.headers,
+        //     requestData: error.config?.data,
+        //     responseHeaders: error.response?.headers,
+        //     responseData: error.response?.data,
+        //     message: error.message,
+        // });
 
         if (error.response?.status === 401) {
             console.log(
