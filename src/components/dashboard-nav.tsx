@@ -20,7 +20,7 @@ import {
     LogOut,
     User,
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function DashboardNav() {
     const pathname = usePathname();

@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { useAuth } from '@/contexts/AuthContext';
+import { LoadingSpinner } from '@/components/ui/loading';
 
 export default function DashboardLayout({
     children,
@@ -15,21 +16,23 @@ export default function DashboardLayout({
     const router = useRouter();
 
     useEffect(() => {
+        console.log('isAuthenticated:', isAuthenticated);
+        console.log('isLoading:', isLoading);
         if (!isLoading && !isAuthenticated) {
-            console.log('isAuthenticated:', isAuthenticated);
-            console.log('isLoading:', isLoading);
             console.log('Redirecting to login page');
             router.push('/login');
         }
-    }, [isAuthenticated, isLoading, router]);
+    // }, [isAuthenticated, isLoading, router]);
+    }, [isAuthenticated, isLoading]);
 
     // Show loading spinner while checking authentication
     if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-            </div>
-        );
+        return <LoadingSpinner />;
+        // return (
+        //     <div className="min-h-screen flex items-center justify-center">
+        //         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        //     </div>
+        // );
     }
 
     // If not authenticated, don't render dashboard (will redirect)
@@ -39,7 +42,7 @@ export default function DashboardLayout({
 
     return (
         <div className='min-h-screen flex flex-col'>
-            <DashboardNav />
+            {/* <DashboardNav /> */}
             <main className='flex-1 bg-gray-50'>{children}</main>
         </div>
     );

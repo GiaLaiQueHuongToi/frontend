@@ -9,7 +9,7 @@ import { CustomPagination } from '@/components/ui/custom-pagination';
 import { Video, Plus, Eye, Youtube, ExternalLink, RefreshCw, Share2, Download } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { googleOAuthService } from '@/services/googleOAuthService';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { youtubeStatsService, type YouTubeStats } from '@/services/youtubeService';
 import { useVideos } from '@/hooks/useVideos';
 import { videoService } from '@/services/videoService';
