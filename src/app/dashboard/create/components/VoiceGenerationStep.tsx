@@ -86,7 +86,8 @@ export function VoiceGenerationStep({ imageState, state, onUpdateState, onSegmen
                     try {
                         const audioRequest: AudioRequest = {
                             text: segment.scriptText,
-                            language: state.language === 'vietnamese' ? 'vi-VN' : 'en-US',
+                            // language: state.language === 'vietnamese' ? 'vi-VN' : 'en-US',
+                            language: 'en-US',
                             gender: state.voiceType || 'female',
                             emotion: state.emotion || 'neutral',
                         };
@@ -207,28 +208,7 @@ export function VoiceGenerationStep({ imageState, state, onUpdateState, onSegmen
 
     return (
         <div className='space-y-6'>
-            <div className='space-y-2'>
-                <Label>Language</Label>
-                <div className='flex gap-4'>
-                    <RadioGroup
-                        value={state.language}
-                        onValueChange={handleLanguageChange}
-                        className='flex gap-4'
-                    >
-                        {/* <div className='flex items-center space-x-2'>
-                            <RadioGroupItem
-                                value='vietnamese'
-                                id='vietnamese'
-                            />
-                            <Label htmlFor='vietnamese'>Vietnamese</Label>
-                        </div> */}
-                        <div className='flex items-center space-x-2'>
-                            <RadioGroupItem value='english' id='english' />
-                            <Label htmlFor='english'>English</Label>
-                        </div>
-                    </RadioGroup>
-                </div>
-            </div>
+            
 
             <div className='space-y-2'>
                 <Label>Voice Type</Label>

@@ -432,7 +432,7 @@ export function CreateVideoFlow() {
                                 disabled={!isStepValid() || isLoading}
                                 className='gap-2'
                             >
-                                {currentStep === 9 ? 'Finish' : 'Next'}
+                                {currentStep === 9 ? 'Exit without saving' : 'Next'}
                                 <ArrowRight className='h-4 w-4' />
                             </Button>
                         </CardFooter>

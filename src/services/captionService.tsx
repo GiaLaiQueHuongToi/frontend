@@ -4,7 +4,7 @@ import axios, { AxiosInstance } from 'axios';
 const captionAxios: AxiosInstance = axios.create({
     baseURL:
         process.env.NEXT_PUBLIC_CAPTION_GENERATOR_URL ||
-        'http://localhost:8081',
+        'http://localhost:8000',
     headers: {
         Accept: '*/*',
     },
