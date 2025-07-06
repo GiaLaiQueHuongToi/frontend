@@ -46,6 +46,12 @@ export interface ApiResponse<T> {
     message?: string;
 }
 
+export interface PublishVideoRequest {
+    videoId: number;
+    publicUrl: string;
+    publicId: string;
+  }
+
 export class VideoService {
     private readonly baseUrl = '/videos';
 
@@ -471,6 +477,41 @@ export class VideoService {
             return false;
         }
     }
+
+    // Publish video to platform
+  async publishVideo(request: PublishVideoRequest): Promise<VideoResponse> {
+    try {
+      const response = await Axios.post<ApiResponse<VideoResponse>>(
+        '/videos/publish',
+        null,
+        {
+          params: {
+            videoId: request.videoId,
+            publicUrl: request.publicUrl,
+            publicId: request.publicId
+          }
+        }
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error publishing video:', error);
+      throw error;
+    }
+  }
+
+  // Get published video information
+  async getPublishedVideo(videoId: number): Promise<PublishedVideoResponse> {
+    try {
+      const response = await Axios.get<ApiResponse<PublishedVideoResponse>>(
+        `/videos/${videoId}/published`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching published video:', error);
+      throw error;
+    }
+  }
+
 }
 
 export const videoService = new VideoService();

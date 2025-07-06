@@ -1,12 +1,12 @@
 'use client';
 
 import type React from 'react';
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft, Download, Share2, Edit, Play, Pause, Link as LinkIcon, ExternalLink, Eye, Calendar, Hash, Clock } from 'lucide-react';
 import {
     DropdownMenu,
@@ -16,17 +16,126 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
 import { videoService, type VideoResponse, type PublishedVideoResponse } from '@/services/videoService';
+import { youtubeUploadService } from '@/services/youtubeUploadService';
+import { useAuth } from '@/hooks/useAuth';
+
+// Define the component interface
+interface YouTubeUploadDialogProps {
+    video: VideoResponse;
+    isOpen: boolean;
+    onClose: () => void;
+    onSuccess: (youtubeVideoId: string, youtubeUrl: string, publishedVideo?: any) => void;
+}
+
+// Placeholder component for YouTube upload
+const YouTubeUploadDialogPlaceholder: React.FC<YouTubeUploadDialogProps> = ({ 
+    isOpen, 
+    onClose, 
+    onSuccess, 
+    video 
+}) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+                <h2 className="text-xl font-bold mb-4">YouTube Upload</h2>
+                <p className="text-gray-600 mb-4">
+                    YouTube upload component is not yet implemented.
+                </p>
+                <div className="flex gap-2">
+                    <Button onClick={onClose} variant="outline">
+                        Close
+                    </Button>
+                    <Button onClick={() => {
+                        onSuccess('test-video-id', 'https://youtube.com/watch?v=test');
+                        onClose();
+                    }}>
+                        Simulate Success
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function VideoDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const { id } = params;
     const { toast } = useToast();
+    const { isYouTubeConnected } = useAuth();
+    
+    // Existing state
     const [isPlaying, setIsPlaying] = useState(false);
     const [video, setVideo] = useState<VideoResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadProgress, setDownloadProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
+    
+    // YouTube upload state
+    const [showYouTubeUpload, setShowYouTubeUpload] = useState(false);
+    const [hasYouTubePermissions, setHasYouTubePermissions] = useState(false);
+    const [publishedVideoData, setPublishedVideoData] = useState<PublishedVideoResponse | null>(null);
+
+    // Component state for dynamic import
+    const [YouTubeUploadDialog, setYouTubeUploadDialog] = useState<React.FC<YouTubeUploadDialogProps>>(
+        () => YouTubeUploadDialogPlaceholder
+    );
+
+    // Load the YouTube upload component dynamically
+    useEffect(() => {
+        const loadYouTubeComponent = async () => {
+            try {
+                // Try dynamic import first
+                const module = await import('@/components/youtube/YouTubeUploadDialog').catch(() => null);
+                
+                if (module?.YouTubeUploadDialog) {
+                    setYouTubeUploadDialog(() => module.YouTubeUploadDialog);
+                    console.log('✅ YouTubeUploadDialog loaded successfully');
+                } else {
+                    // Try require as fallback
+                    try {
+                        const componentModule = require('@/components/youtube/YouTubeUploadDialog');
+                        const Component = componentModule.YouTubeUploadDialog || 
+                                         componentModule.default || 
+                                         YouTubeUploadDialogPlaceholder;
+                        setYouTubeUploadDialog(() => Component);
+                        console.log('✅ YouTubeUploadDialog loaded via require');
+                    } catch (requireError) {
+                        console.warn('YouTubeUploadDialog not found, using placeholder:', requireError);
+                        setYouTubeUploadDialog(() => YouTubeUploadDialogPlaceholder);
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to load YouTubeUploadDialog, using placeholder:', error);
+                setYouTubeUploadDialog(() => YouTubeUploadDialogPlaceholder);
+            }
+        };
+
+        loadYouTubeComponent();
+    }, []);
+
+    // Check for published video data when video is loaded
+    useEffect(() => {
+        const checkPublishedVideo = async () => {
+            if (video && video.status === 'published') {
+                try {
+                    console.log('🔍 Checking for published video data...');
+                    const publishedData = await videoService.getPublishedVideo(video.id);
+                    setPublishedVideoData(publishedData);
+                    console.log('✅ Published video data loaded:', publishedData);
+                } catch (error) {
+                    console.log('ℹ️ No published video data found or error:', error);
+                    // This is expected for videos that haven't been published to external platforms
+                }
+            }
+        };
+
+        if (video) {
+            checkPublishedVideo();
+        }
+    }, [video]);
 
     // Load video data on component mount
     useEffect(() => {
@@ -34,6 +143,18 @@ export default function VideoDetailPage() {
             loadVideo();
         }
     }, [id]);
+
+    // Check YouTube permissions on mount
+    useEffect(() => {
+        const checkPermissions = async () => {
+            const hasPermissions = await youtubeUploadService.checkUploadPermissions();
+            setHasYouTubePermissions(hasPermissions);
+        };
+        
+        if (video && isYouTubeConnected) {
+            checkPermissions();
+        }
+    }, [video, isYouTubeConnected]);
 
     const loadVideo = async () => {
         try {
@@ -172,6 +293,31 @@ export default function VideoDetailPage() {
                 description: 'Could not share the video. Please try again.',
                 variant: 'destructive',
             });
+        }
+    };
+
+    // Handle successful YouTube upload
+    const handleYouTubeUploadSuccess = async (youtubeVideoId: string, youtubeUrl: string, publishedVideo?: any) => {
+        try {
+            console.log('Video uploaded to YouTube:', { youtubeVideoId, youtubeUrl, publishedVideo });
+            
+            toast({
+                title: 'Success!',
+                description: 'Video uploaded to YouTube and published successfully.',
+            });
+
+            setShowYouTubeUpload(false);
+            
+            // Update published video data if provided
+            if (publishedVideo) {
+                setPublishedVideoData(publishedVideo);
+            }
+            
+            // Refresh video data to get updated status
+            await loadVideo();
+            
+        } catch (error) {
+            console.error('Error handling YouTube upload success:', error);
         }
     };
 
@@ -318,7 +464,7 @@ export default function VideoDetailPage() {
                                     onClick={() => setIsPlaying(true)}
                                 >
                                     <img
-                                        src={videoService.generateThumbnailUrl(video.videoUrl)}
+                                        src={video.videoUrl ? videoService.generateThumbnailUrl(video.videoUrl) : '/placeholder-video.svg'}
                                         alt={video.title}
                                         className='w-full h-full object-cover'
                                         onError={(e) => {
@@ -469,6 +615,29 @@ export default function VideoDetailPage() {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
 
+                                {/* YouTube Upload Button */}
+                                {isYouTubeConnected ? (
+                                    <Button
+                                        variant='outline'
+                                        onClick={() => setShowYouTubeUpload(true)}
+                                        disabled={!hasYouTubePermissions}
+                                        className='flex items-center gap-2'
+                                        title={!hasYouTubePermissions ? 'YouTube upload permissions required' : 'Upload to YouTube'}
+                                    >
+                                        <Youtube className='h-4 w-4 text-red-600' />
+                                        Upload to YouTube
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant='outline'
+                                        onClick={() => router.push('/dashboard')}
+                                        className='flex items-center gap-2'
+                                    >
+                                        <Youtube className='h-4 w-4 text-red-600' />
+                                        Connect YouTube First
+                                    </Button>
+                                )}
+
                                 <Button variant='outline' className='flex items-center gap-2'>
                                     <Edit className='h-4 w-4' />
                                     Edit
@@ -514,21 +683,21 @@ export default function VideoDetailPage() {
                                     </div>
                                     <span className='font-semibold text-gray-900'>#{video.id}</span>
                                 </div>
-                                    <div className='flex items-center justify-between py-2'>
-                                        <div className='flex items-center gap-2 text-gray-600'>
-                                            <div className={`h-4 w-4 rounded-full ${
-                                                video.status === 'published' ? 'bg-green-500' : 'bg-yellow-500'
-                                            }`}></div>
-                                            <span className='text-sm'>Status</span>
-                                        </div>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            video.status === 'published' 
-                                                ? 'bg-green-100 text-green-800' 
-                                                : 'bg-yellow-100 text-yellow-800'
-                                        }`}>
-                                            {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
-                                        </span>
+                                <div className='flex items-center justify-between py-2'>
+                                    <div className='flex items-center gap-2 text-gray-600'>
+                                        <div className={`h-4 w-4 rounded-full ${
+                                            video.status === 'published' ? 'bg-green-500' : 'bg-yellow-500'
+                                        }`}></div>
+                                        <span className='text-sm'>Status</span>
                                     </div>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                        video.status === 'published' 
+                                            ? 'bg-green-100 text-green-800' 
+                                            : 'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                        {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
+                                    </span>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -614,7 +783,7 @@ export default function VideoDetailPage() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent className='w-full'>
-                                        <DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setShowYouTubeUpload(true)}>
                                             <Youtube className='mr-2 h-4 w-4 text-red-600' />
                                             <span>YouTube</span>
                                         </DropdownMenuItem>
@@ -640,7 +809,10 @@ export default function VideoDetailPage() {
                                 <p className='text-sm text-gray-600 mb-4'>
                                     Your video is ready to be published to various platforms.
                                 </p>
-                                <Button className='w-full bg-purple-600 hover:bg-purple-700'>
+                                <Button 
+                                    className='w-full bg-purple-600 hover:bg-purple-700'
+                                    onClick={() => setShowYouTubeUpload(true)}
+                                >
                                     <span className='mr-2'>🚀</span>
                                     Publish Video
                                 </Button>
@@ -661,6 +833,68 @@ export default function VideoDetailPage() {
                     )}
                 </div>
             </div>
+
+            {/* Published Video Information Section */}
+            {publishedVideoData && (
+                <div className='grid grid-cols-1 xl:grid-cols-4 gap-6 mt-6'>
+                    <div className='xl:col-span-4'>
+                        <Card>
+                            <CardContent className='p-6'>
+                                <h3 className='text-lg font-semibold mb-4 text-gray-900'>Published Video Information</h3>
+                                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                                    <div>
+                                        <Label className='text-sm font-medium text-gray-600'>Platform</Label>
+                                        <p className='text-gray-900'>{publishedVideoData.platform}</p>
+                                    </div>
+                                    <div>
+                                        <Label className='text-sm font-medium text-gray-600'>External ID</Label>
+                                        <p className='text-gray-900 font-mono text-sm'>{publishedVideoData.externalId}</p>
+                                    </div>
+                                    <div>
+                                        <Label className='text-sm font-medium text-gray-600'>Published At</Label>
+                                        <p className='text-gray-900'>{formatDate(publishedVideoData.publishedAt)}</p>
+                                    </div>
+                                    <div>
+                                        <Label className='text-sm font-medium text-gray-600'>Platform URL</Label>
+                                        <a 
+                                            href={publishedVideoData.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className='text-blue-600 hover:text-blue-800 text-sm break-all'
+                                        >
+                                            {publishedVideoData.url}
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <Label className='text-sm font-medium text-gray-600'>Platform Views</Label>
+                                        <p className='text-gray-900'>{publishedVideoData.views.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <Label className='text-sm font-medium text-gray-600'>Status</Label>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                            publishedVideoData.status === 'published' 
+                                                ? 'bg-green-100 text-green-800' 
+                                                : 'bg-yellow-100 text-yellow-800'
+                                        }`}>
+                                            {publishedVideoData.status.charAt(0).toUpperCase() + publishedVideoData.status.slice(1)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            )}
+
+            {/* YouTube Upload Dialog */}
+            {video && (
+                <YouTubeUploadDialog
+                    video={video}
+                    isOpen={showYouTubeUpload}
+                    onClose={() => setShowYouTubeUpload(false)}
+                    onSuccess={handleYouTubeUploadSuccess}
+                />
+            )}
         </div>
     );
 }
