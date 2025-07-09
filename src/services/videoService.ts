@@ -11,7 +11,7 @@ export interface PublishedVideoResponse {
     id: number;
     title: string;
     videoUrl: string; // cloudinary url
-    status: 'draft' | 'published';
+    status: 'private' | 'published';
     views: number;
     description: string;
     createdAt: string;

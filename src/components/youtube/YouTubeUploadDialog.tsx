@@ -194,7 +194,7 @@ export function YouTubeUploadDialog({ video, isOpen, onClose, onSuccess }: YouTu
                             </p>
                         </div>
 
-                        {/* Category */}
+                        {/* Category
                         <div>
                             <Label>Category</Label>
                             <Select value={category} onValueChange={setCategory} disabled={isUploading}>
@@ -218,7 +218,7 @@ export function YouTubeUploadDialog({ video, isOpen, onClose, onSuccess }: YouTu
                                     <SelectItem value="28">Science & Technology</SelectItem>
                                 </SelectContent>
                             </Select>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Upload Progress */}

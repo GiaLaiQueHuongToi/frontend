@@ -6,6 +6,20 @@ export interface YouTubeStats {
     channelId: string;
   }
   
+  // Add interface for individual video stats response
+  export interface YouTubeVideoStats {
+    viewCount: number;
+    likeCount: number;
+    commentCount: number;
+    subscriberCount?: number;
+  }
+  
+  export interface YouTubeVideoStatsResponse {
+    success: boolean;
+    stats?: YouTubeVideoStats;
+    error?: string;
+  }
+  
   export interface YouTubeVideo {
     id: string;
     title: string;
@@ -156,6 +170,72 @@ export interface YouTubeStats {
       } catch (error) {
         console.error('Error fetching YouTube videos:', error);
         throw error;
+      }
+    },
+  
+    // Get statistics for a specific video by ID
+    getVideoStats: async (videoId: string): Promise<YouTubeVideoStatsResponse> => {
+      const accessToken = youtubeStatsService.getAccessToken();
+      
+      if (!accessToken) {
+        return {
+          success: false,
+          error: 'YouTube access token not found'
+        };
+      }
+
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Accept': 'application/json',
+            }
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Token expired, remove it
+            localStorage.removeItem('youtubeAccessToken');
+            return {
+              success: false,
+              error: 'YouTube access token expired. Please reconnect.'
+            };
+          }
+          return {
+            success: false,
+            error: `Failed to fetch video stats: ${response.status}`
+          };
+        }
+
+        const data = await response.json();
+        
+        if (!data.items || data.items.length === 0) {
+          return {
+            success: false,
+            error: 'Video not found or not accessible'
+          };
+        }
+
+        const videoStats = data.items[0].statistics;
+
+        return {
+          success: true,
+          stats: {
+            viewCount: parseInt(videoStats.viewCount || '0'),
+            likeCount: parseInt(videoStats.likeCount || '0'),
+            commentCount: parseInt(videoStats.commentCount || '0'),
+          }
+        };
+
+      } catch (error) {
+        console.error('Error fetching YouTube video stats:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
       }
     },
   
