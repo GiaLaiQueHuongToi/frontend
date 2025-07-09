@@ -26,7 +26,7 @@ export function YouTubeUploadDialog({ video, isOpen, onClose, onSuccess }: YouTu
     // Form state
     const [title, setTitle] = useState(video.title || '');
     const [description, setDescription] = useState(video.description || '');
-    const [privacy, setPrivacy] = useState<'private' | 'unlisted' | 'public'>('unlisted');
+    const [privacy, setPrivacy] = useState<'private' | 'unlisted' | 'public'>('public');
     const [tags, setTags] = useState('');
     const [category, setCategory] = useState('22'); // People & Blogs
     
