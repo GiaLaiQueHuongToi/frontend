@@ -696,9 +696,9 @@ export default function VideoDetailPage() {
                                     <Button
                                         variant='outline'
                                         onClick={() => setShowYouTubeUpload(true)}
-                                        disabled={!hasYouTubePermissions}
+                                        // disabled={!hasYouTubePermissions}
                                         className='flex items-center gap-2'
-                                        title={!hasYouTubePermissions ? 'YouTube upload permissions required' : 'Upload to YouTube'}
+                                        // title={!hasYouTubePermissions ? 'YouTube upload permissions required' : 'Upload to YouTube'}
                                     >
                                         <Youtube className='h-4 w-4 text-red-600' />
                                         Upload to YouTube

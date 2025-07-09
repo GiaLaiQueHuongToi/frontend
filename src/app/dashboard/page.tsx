@@ -218,7 +218,12 @@ export default function DashboardPage() {
                                                 }}
                                             />
                                             <div className='absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded'>
-                                                {video.views.toLocaleString()} views
+                                                {video.status === 'private' 
+                                                    ? 'private' 
+                                                    : !isYouTubeConnected 
+                                                        ? 'disabled' 
+                                                        : `${video.views.toLocaleString()} views`
+                                                }
                                             </div>
                                         </div>
                                         <CardContent className='p-4'>
@@ -286,7 +291,12 @@ export default function DashboardPage() {
                                                 }}
                                             />
                                             <div className='absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded'>
-                                                {video.views.toLocaleString()} views
+                                                {video.status === 'private' 
+                                                    ? 'private' 
+                                                    : !isYouTubeConnected 
+                                                        ? 'disabled' 
+                                                        : `${video.views.toLocaleString()} views`
+                                                }
                                             </div>
                                         </div>
                                         <CardContent className='p-4'>
@@ -354,7 +364,12 @@ export default function DashboardPage() {
                                                 }}
                                             />
                                             <div className='absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded'>
-                                                private
+                                                {video.status === 'private' 
+                                                    ? 'private' 
+                                                    : !isYouTubeConnected 
+                                                        ? 'disabled' 
+                                                        : `${video.views.toLocaleString()} views`
+                                                }
                                             </div>
                                         </div>
                                         <CardContent className='p-4'>
