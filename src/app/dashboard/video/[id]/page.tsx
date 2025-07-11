@@ -155,7 +155,7 @@ export default function VideoDetailPage() {
     // Check for published video data when video is loaded
     useEffect(() => {
         const checkPublishedVideo = async () => {
-            if (video) {
+            if (video && video.status === 'published') {
                 try {
                     console.log('🔍 Checking for published video data...');
                     const publishedData = await videoService.getPublishedVideo(video.id);
@@ -844,7 +844,7 @@ export default function VideoDetailPage() {
                         </Card>
                     )}
 
-                    {/* Publish Actions for Draft Videos - Only show for private videos */}
+                    {/* Publish Actions for Draft Videos - Only show for private videos
                     {video.status === 'private' && (
                         <Card>
                             <CardContent className='p-6'>
@@ -861,7 +861,7 @@ export default function VideoDetailPage() {
                                 </Button>
                             </CardContent>
                         </Card>
-                    )}
+                    )} */}
 
                     {/* Developer Info - Only show in development */}
                     {process.env.NODE_ENV === 'development' && (

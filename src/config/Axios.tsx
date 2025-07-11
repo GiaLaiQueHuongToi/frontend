@@ -61,45 +61,45 @@ Axios.interceptors.request.use((config) => {
 });
 
 // Add response interceptor for error handling
-Axios.interceptors.response.use(
-    (response) => {
-        console.log('✅ API Success:', {
-            status: response.status,
-            url: response.config.url,
-            method: response.config.method,
-        });
-        return response;
-    },
-    (error: AxiosError) => {
-        console.error('❌ API Error Details:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            url: error.config?.url,
-            method: error.config?.method?.toUpperCase(),
-            requestHeaders: error.config?.headers,
-            requestData: error.config?.data,
-            responseHeaders: error.response?.headers,
-            responseData: error.response?.data,
-            message: error.message,
-        });
+// Axios.interceptors.response.use(
+//     (response) => {
+//         console.log('✅ API Success:', {
+//             status: response.status,
+//             url: response.config.url,
+//             method: response.config.method,
+//         });
+//         return response;
+//     },
+//     (error: AxiosError) => {
+//         console.error('❌ API Error Details:', {
+//             status: error.response?.status,
+//             statusText: error.response?.statusText,
+//             url: error.config?.url,
+//             method: error.config?.method?.toUpperCase(),
+//             requestHeaders: error.config?.headers,
+//             requestData: error.config?.data,
+//             responseHeaders: error.response?.headers,
+//             responseData: error.response?.data,
+//             message: error.message,
+//         });
 
-        if (error.response?.status === 401) {
-            console.log(
-                '🔒 Authentication failed - check credentials and backend'
-            );
-            // Token expired or invalid, clear auth and redirect
-            // localStorage.removeItem('accessToken');
-            // localStorage.removeItem('username');
-            // localStorage.removeItem('isAuthenticated');
-            // localStorage.removeItem('user');
-            // Only redirect if not already on auth pages
-            // if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-            //   window.location.href = '/login';
-            // }
-        }
-        return Promise.reject(error);
-    }
-);
+//         if (error.response?.status === 401) {
+//             console.log(
+//                 '🔒 Authentication failed - check credentials and backend'
+//             );
+//             // Token expired or invalid, clear auth and redirect
+//             // localStorage.removeItem('accessToken');
+//             // localStorage.removeItem('username');
+//             // localStorage.removeItem('isAuthenticated');
+//             // localStorage.removeItem('user');
+//             // Only redirect if not already on auth pages
+//             // if (typeof window !== 'undefined' && !window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+//             //   window.location.href = '/login';
+//             // }
+//         }
+//         return Promise.reject(error);
+//     }
+// );
 
 export default Axios;
 
