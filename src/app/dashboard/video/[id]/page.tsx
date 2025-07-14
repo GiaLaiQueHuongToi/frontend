@@ -98,7 +98,6 @@ export default function VideoDetailPage() {
                 
                 if (module?.YouTubeUploadDialog) {
                     setYouTubeUploadDialog(() => module.YouTubeUploadDialog);
-                    console.log('✅ YouTubeUploadDialog loaded successfully');
                 } else {
                     // Try require as fallback
                     try {
@@ -107,7 +106,7 @@ export default function VideoDetailPage() {
                                          componentModule.default || 
                                          YouTubeUploadDialogPlaceholder;
                         setYouTubeUploadDialog(() => Component);
-                        console.log('✅ YouTubeUploadDialog loaded via require');
+                        console.log('YouTubeUploadDialog loaded via require');
                     } catch (requireError) {
                         console.warn('YouTubeUploadDialog not found, using placeholder:', requireError);
                         setYouTubeUploadDialog(() => YouTubeUploadDialogPlaceholder);
@@ -157,10 +156,10 @@ export default function VideoDetailPage() {
         const checkPublishedVideo = async () => {
             if (video && video.status === 'published') {
                 try {
-                    console.log('🔍 Checking for published video data...');
+                    console.log('Checking for published video data...');
                     const publishedData = await videoService.getPublishedVideo(video.id);
                     setPublishedVideoData(publishedData);
-                    console.log('✅ Published video data loaded:', publishedData);
+                    console.log('Published video data loaded:', publishedData);
                     
                     // Update video status to 'published' if we have published data
                     if (publishedData && video.status !== 'published') {
@@ -172,7 +171,7 @@ export default function VideoDetailPage() {
                         await fetchYouTubeViews(publishedData);
                     }
                 } catch (error) {
-                    console.log('ℹ️ No published video data found or error:', error);
+                    console.log('No published video data found or error:', error);
                     // This is expected for videos that haven't been published to external platforms
                 }
             }

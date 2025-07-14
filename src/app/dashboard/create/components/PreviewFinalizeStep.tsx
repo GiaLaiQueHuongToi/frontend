@@ -44,11 +44,6 @@ export function PreviewFinalizeStep({
     onFinish,
     finalVideoBlob,
 }: PreviewFinalizeStepProps) {
-    console.log('🎬 PreviewFinalizeStep received video blob:', {
-        hasBlob: !!finalVideoBlob,
-        blobSize: finalVideoBlob?.size || 0,
-        blobType: finalVideoBlob?.type || 'N/A',
-    });
 
     const router = useRouter();
     const { toast } = useToast();
@@ -82,7 +77,6 @@ export function PreviewFinalizeStep({
     const cloudinaryService = new CloudinaryService();
     const videoService = new VideoService();
 
-    // Initialize title and description with defaults
     useEffect(() => {
         if (!videoTitle) {
             setVideoTitle(
@@ -98,18 +92,10 @@ export function PreviewFinalizeStep({
         }
     }, [state, videoTitle, videoDescription]);
 
-    // Create video URL when finalVideoBlob is available
     useEffect(() => {
         if (finalVideoBlob) {
-            console.log('🎥 Final video blob received:', {
-                size: finalVideoBlob.size,
-                type: finalVideoBlob.type,
-                isValid: finalVideoBlob.size > 0,
-            });
-
             // Validate the blob
             if (finalVideoBlob.size === 0) {
-                console.error('❌ Video blob is empty');
                 setVideoError('Video file is empty');
                 return;
             }
@@ -123,7 +109,7 @@ export function PreviewFinalizeStep({
             // Create a compatible video blob
             processedBlob = createCompatibleVideoBlob(finalVideoBlob);
 
-            console.log('✅ Processed video blob:', {
+            console.log('Processed video blob:', {
                 originalType: finalVideoBlob.type,
                 processedType: processedBlob.type,
                 sizeMatches: finalVideoBlob.size === processedBlob.size,
@@ -152,7 +138,6 @@ export function PreviewFinalizeStep({
                 sources.forEach((source) => URL.revokeObjectURL(source.url));
             };
         } else {
-            console.log('❌ No final video blob provided');
             setVideoError('No video available for preview');
         }
     }, [finalVideoBlob]);
@@ -242,7 +227,7 @@ export function PreviewFinalizeStep({
         }
 
         console.warn(
-            '⚠️ Video playback error (handled gracefully):',
+            'Video playback error (handled gracefully):',
             errorMessage,
             error
         );
@@ -485,10 +470,10 @@ export function PreviewFinalizeStep({
                                     onLoadedMetadata={handleVideoLoadedMetadata}
                                     onError={handleVideoError}
                                     onLoadStart={() =>
-                                        console.log('🎬 Video loading started')
+                                        console.log('Video loading started')
                                     }
                                     onCanPlay={() =>
-                                        console.log('✅ Video can play')
+                                        console.log('Video can play')
                                     }
                                     controls
                                     preload='metadata'
@@ -638,7 +623,7 @@ export function PreviewFinalizeStep({
                         <div>
                             <Label className='text-gray-500'>Status</Label>
                             <p className='font-medium text-green-600'>
-                                ✅ Complete
+                                Complete
                             </p>
                         </div>
                     </div>

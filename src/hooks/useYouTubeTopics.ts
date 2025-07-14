@@ -13,12 +13,12 @@ export const useYouTubeTopics = () => {
         setIsLoadingCategories(true);
         setError(null);
         try {
-            console.log('🚀 Fetching categories from YouTube API...');
+            console.log('Fetching categories from YouTube API...');
             const fetchedCategories = await youTubeTopicService.getCategoriesAsTopics();
-            console.log('✅ Fetched categories:', fetchedCategories);
+            console.log('Fetched categories:', fetchedCategories);
             setCategories(fetchedCategories);
         } catch (err) {
-            console.error('❌ Error fetching categories:', err);
+            console.error('Error fetching categories:', err);
             setError('Failed to fetch YouTube categories');
         } finally {
             setIsLoadingCategories(false);
@@ -30,12 +30,12 @@ export const useYouTubeTopics = () => {
         setIsLoadingVideos(true);
         setError(null);
         try {
-            console.log(`🚀 Fetching videos for topic: ${topic}`);
+            console.log(`Fetching videos for topic: ${topic}`);
             const fetchedVideos = await youTubeTopicService.searchVideos(topic, maxResults);
-            console.log('✅ Fetched videos:', fetchedVideos);
+            console.log('Fetched videos:', fetchedVideos);
             setVideos(fetchedVideos);
         } catch (err) {
-            console.error('❌ Error fetching videos:', err);
+            console.error('Error fetching videos:', err);
             setError(`Failed to fetch videos for topic: ${topic}`);
         } finally {
             setIsLoadingVideos(false);

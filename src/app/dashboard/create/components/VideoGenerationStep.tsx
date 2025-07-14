@@ -302,7 +302,7 @@ export function VideoGenerationStep({
                                 </div>
                                 <div>
                                     FFmpeg Status:{' '}
-                                    {ffmpeg ? '✅ Loaded' : '❌ Not loaded'}
+                                    {ffmpeg ? 'Loaded' : 'Not loaded'}
                                 </div>
                                 <div>
                                     Active Segments:{' '}

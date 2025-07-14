@@ -21,13 +21,10 @@ export function FFmpegProvider({ children }: { children: React.ReactNode }) {
         try {
             setIsLoading(true);
             setError(null);
-            console.log('🔄 Initializing FFmpeg...');
 
             const ffmpegInstance = await initializeFFmpeg();
-            console.log('✅ FFmpeg initialized successfully');
             setFFmpeg(ffmpegInstance);
         } catch (err) {
-            console.error('❌ Failed to initialize FFmpeg:', err);
             const errorMessage =
                 err instanceof Error ? err.message : 'Unknown error';
             setError(`Failed to load video processing engine: ${errorMessage}`);

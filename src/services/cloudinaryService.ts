@@ -128,7 +128,7 @@ export class CloudinaryService {
                         try {
                             const response: CloudinaryUploadResponse =
                                 JSON.parse(xhr.responseText);
-                            console.log('✅ Video uploaded to Cloudinary:', {
+                            console.log('Video uploaded to Cloudinary:', {
                                 public_id: response.public_id,
                                 secure_url: response.secure_url,
                                 duration: response.duration,
@@ -137,7 +137,7 @@ export class CloudinaryService {
                             resolve(response);
                         } catch (parseError) {
                             console.error(
-                                '❌ Failed to parse Cloudinary response:',
+                                'Failed to parse Cloudinary response:',
                                 parseError
                             );
                             reject(
@@ -146,7 +146,7 @@ export class CloudinaryService {
                         }
                     } else {
                         console.error(
-                            '❌ Cloudinary upload failed:',
+                            'Cloudinary upload failed:',
                             xhr.status,
                             xhr.responseText
                         );
@@ -169,12 +169,12 @@ export class CloudinaryService {
                 });
 
                 xhr.addEventListener('error', () => {
-                    console.error('❌ Network error during Cloudinary upload');
+                    console.error('Network error during Cloudinary upload');
                     reject(new Error('Network error during upload'));
                 });
 
                 xhr.addEventListener('timeout', () => {
-                    console.error('❌ Cloudinary upload timeout');
+                    console.error('Cloudinary upload timeout');
                     reject(new Error('Upload timeout'));
                 });
 
@@ -186,7 +186,7 @@ export class CloudinaryService {
                 xhr.timeout = 5 * 60 * 1000;
 
                 // Start upload
-                console.log('🚀 Starting Cloudinary video upload...', {
+                console.log('Starting Cloudinary video upload...', {
                     filename: videoFile.name,
                     size: videoFile.size,
                     type: videoFile.type,
@@ -197,7 +197,7 @@ export class CloudinaryService {
 
                 xhr.send(formData);
             } catch (error) {
-                console.error('❌ Error preparing Cloudinary upload:', error);
+                console.error('Error preparing Cloudinary upload:', error);
                 reject(error);
             }
         });
@@ -241,7 +241,7 @@ export class CloudinaryService {
 
             return thumbnailUrl;
         } catch (error) {
-            console.error('❌ Error generating thumbnail URL:', error);
+            console.error('Error generating thumbnail URL:', error);
             return '/placeholder-thumbnail.svg'; // Fallback thumbnail
         }
     }
@@ -290,7 +290,7 @@ export class CloudinaryService {
 
             return optimizedUrl;
         } catch (error) {
-            console.error('❌ Error generating optimized video URL:', error);
+            console.error('Error generating optimized video URL:', error);
             return videoUrl; // Return original URL on error
         }
     }

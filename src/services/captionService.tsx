@@ -14,7 +14,7 @@ const captionAxios: AxiosInstance = axios.create({
 // Add request interceptor for logging
 captionAxios.interceptors.request.use((config) => {
     const fullURL = `${config.baseURL}${config.url}`;
-    console.log('🎬 Caption Service Request:', {
+    console.log('Caption Service Request:', {
         method: config.method?.toUpperCase(),
         endpoint: config.url,
         fullURL: fullURL,
@@ -27,7 +27,7 @@ captionAxios.interceptors.request.use((config) => {
 // Add response interceptor for error handling
 captionAxios.interceptors.response.use(
     (response) => {
-        console.log('✅ Caption Service Response:', {
+        console.log('Caption Service Response:', {
             status: response.status,
             contentType: response.headers['content-type'],
             dataSize:
@@ -38,7 +38,7 @@ captionAxios.interceptors.response.use(
         return response;
     },
     (error) => {
-        console.error('❌ Caption Service Error:', {
+        console.error('Caption Service Error:', {
             status: error.response?.status,
             message: error.message,
             url: error.config?.url,
@@ -55,10 +55,10 @@ captionAxios.interceptors.response.use(
             error.response.data
                 .text()
                 .then((text: string) => {
-                    console.error('❌ Caption Service Error Details:', text);
+                    console.error('Caption Service Error Details:', text);
                 })
                 .catch(() => {
-                    console.error('❌ Could not read error response details');
+                    console.error('Could not read error response details');
                 });
         }
 
@@ -103,10 +103,10 @@ export const captionService = {
     healthCheck: async (): Promise<{ success: boolean; error?: string }> => {
         try {
             const response = await captionAxios.get('/health');
-            console.log('✅ Caption Service Health Check:', response.data);
+            console.log('Caption Service Health Check:', response.data);
             return { success: true };
         } catch (error) {
-            console.error('❌ Caption Service Health Check Failed:', error);
+            console.error('Caption Service Health Check Failed:', error);
             return {
                 success: false,
                 error:
@@ -142,7 +142,7 @@ export const captionService = {
                 formData.append('font_color', request.fontColor);
             if (request.position) formData.append('position', request.position);
 
-            console.log('🎬 Sending caption request with parameters:', {
+            console.log('Sending caption request with parameters:', {
                 fileName: videoFile.name,
                 fileSize: videoFile.size,
                 fileType: videoFile.type,
@@ -163,7 +163,7 @@ export const captionService = {
                 }
             );
 
-            console.log('🎥 Caption generation response:', {
+            console.log('Caption generation response:', {
                 status: response.status,
                 data: response.data,
                 videoUrl: response.data.video_url,
@@ -177,7 +177,7 @@ export const captionService = {
             }
 
             // Step 2: Download the actual video blob from the provided URL
-            console.log('📥 Downloading video from:', response.data.video_url);
+            console.log('Downloading video from:', response.data.video_url);
 
             const videoResponse = await captionAxios.get(
                 response.data.video_url,
@@ -186,7 +186,7 @@ export const captionService = {
                 }
             );
 
-            console.log('✅ Video download successful:', {
+            console.log('Video download successful:', {
                 status: videoResponse.status,
                 contentType: videoResponse.headers['content-type'],
                 blobSize: videoResponse.data.size,
@@ -197,7 +197,7 @@ export const captionService = {
             let videoBlob = videoResponse.data;
             if (!videoBlob.type || !videoBlob.type.includes('video')) {
                 console.log(
-                    '🔧 Fixing blob MIME type from',
+                    'Fixing blob MIME type from',
                     videoBlob.type,
                     'to video/mp4'
                 );

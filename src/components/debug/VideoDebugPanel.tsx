@@ -57,7 +57,7 @@ export function VideoDebugPanel({
                                     : 'text-red-600'
                             }
                         >
-                            {debugInfo.hasBlob ? '✅' : '❌'}
+                            {debugInfo.hasBlob ? '' : ''}
                         </span>
                     </div>
                     <div>
@@ -73,7 +73,7 @@ export function VideoDebugPanel({
                                     : 'text-red-600'
                             }
                         >
-                            {debugInfo.isValid ? '✅' : '❌'}
+                            {debugInfo.isValid ? '' : ''}
                         </span>
                     </div>
                     {debugInfo.url && (

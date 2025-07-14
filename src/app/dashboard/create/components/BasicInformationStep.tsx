@@ -18,7 +18,6 @@ interface BasicInformationStepProps {
     onUpdateState: (updates: Partial<VideoCreationState>) => void;
 }
 
-// TrendingUp icon component from original
 function TrendingUp(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
@@ -52,16 +51,15 @@ export function BasicInformationStep({
         fetchVideosForTopic,
     } = useYouTubeTopics();
 
-    // Categories are already strings from the service
     const trendingTopics = categories;
 
     const handleTopicSourceChange = (value: string) => {
         onUpdateState({
             topicSource: value,
-            selectedTopic: '', // Reset selected topic when changing source
-            searchQuery: '', // Reset search query
+            selectedTopic: '',
+            searchQuery: '',
         });
-        setSearchResults([]); // Reset search results
+        setSearchResults([]);
     };
 
     const handleVideoDescriptionChange = (
@@ -95,7 +93,6 @@ export function BasicInformationStep({
         }
     };
 
-    // Auto-search when query changes (debounced)
     useEffect(() => {
         if (!state.searchQuery.trim()) {
             setSearchResults([]);

@@ -86,7 +86,7 @@ export const youtubeUploadService = {
       const youtubeUrl = `https://www.youtube.com/watch?v=${uploadResponse.videoId}`;
       
       try {
-        console.log('📤 Publishing video to backend...', {
+        console.log('Publishing video to backend...', {
           videoId,
           youtubeVideoId: uploadResponse.videoId,
           youtubeUrl
@@ -101,7 +101,7 @@ export const youtubeUploadService = {
           publicId: uploadResponse.videoId
         });
 
-        console.log('✅ Video published to backend successfully:', publishedVideo);
+        console.log('Video published to backend successfully:', publishedVideo);
 
         onProgress?.({
           loaded: 100,
@@ -118,7 +118,7 @@ export const youtubeUploadService = {
         };
 
       } catch (publishError) {
-        console.error('❌ Failed to publish video to backend:', publishError);
+        console.error('Failed to publish video to backend:', publishError);
         
         // Even if backend publish fails, YouTube upload was successful
         // Return success but with warning
@@ -196,7 +196,7 @@ export const youtubeUploadService = {
         throw new Error('No upload URL received from YouTube');
       }
 
-      console.log('✅ Upload session initiated, upload URL received');
+      console.log('Upload session initiated, upload URL received');
 
       // Step 2: Upload video content
       const uploadResponse = await youtubeUploadService.uploadVideoContent(
@@ -243,7 +243,7 @@ export const youtubeUploadService = {
         if (xhr.status === 200 || xhr.status === 201) {
           try {
             const response = JSON.parse(xhr.responseText);
-            console.log('✅ Video uploaded successfully:', response.id);
+            console.log('Video uploaded successfully:', response.id);
             resolve({
               success: true,
               videoId: response.id

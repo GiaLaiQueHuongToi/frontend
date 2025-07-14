@@ -42,7 +42,6 @@ interface CaptionSettings {
     position: 'top' | 'bottom';
 }
 
-// Common color presets that backend supports
 const COLOR_PRESETS = [
     { name: 'White', value: 'white', hex: '#FFFFFF' },
     { name: 'Black', value: 'black', hex: '#000000' },
@@ -54,7 +53,6 @@ const COLOR_PRESETS = [
     { name: 'Purple', value: 'purple', hex: '#800080' },
 ] as const;
 
-// Convert hex to color name if possible, otherwise return hex
 const getOptimalColorValue = (hexColor: string): string => {
     const preset = COLOR_PRESETS.find(
         (p) => p.hex.toLowerCase() === hexColor.toLowerCase()
@@ -67,7 +65,6 @@ export function CaptionedVideoStep({
     onFinish,
     onCaptionedVideoGenerated,
 }: CaptionedVideoStepProps) {
-    // Video states
     const [currentVideoBlob, setCurrentVideoBlob] = useState<Blob | null>(
         videoBlob
     );
@@ -196,7 +193,7 @@ export function CaptionedVideoStep({
             const result = await captionService.generateCaptions(request);
 
             if (result.success && result.videoWithCaptions) {
-                console.log('✅ Caption generation successful:', {
+                console.log('Caption generation successful:', {
                     blobSize: result.videoWithCaptions.size,
                     blobType: result.videoWithCaptions.type,
                     isValidBlob: result.videoWithCaptions.size > 0,
@@ -212,7 +209,7 @@ export function CaptionedVideoStep({
                     onCaptionedVideoGenerated(result.videoWithCaptions);
                 }
             } else {
-                console.error('❌ Caption generation failed:', result.error);
+                console.error('Caption generation failed:', result.error);
                 throw new Error(result.error || 'Failed to generate captions');
             }
         } catch (error) {
