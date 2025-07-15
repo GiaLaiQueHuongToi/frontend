@@ -10,6 +10,11 @@ export const metadata = {
     title: 'AI Short Video Creator',
     description: 'Create trending short videos with AI',
     generator: 'v0.dev',
+    icons: {
+        icon: '/favicon.png',
+        shortcut: '/favicon.png',
+        apple: '/favicon.png',
+    },
 };
 
 export default function RootLayout({

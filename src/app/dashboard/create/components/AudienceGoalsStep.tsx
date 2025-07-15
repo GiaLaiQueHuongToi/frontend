@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import type { VideoCreationState } from '@/types/video-creation';
 import { Wand2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface AudienceGoalsStepProps {
     state: VideoCreationState;
@@ -23,26 +24,31 @@ const audiencesOptions = [
         value: 'general',
         label: 'General Public',
         description: 'Broad audience with diverse interests',
+        image: '/general-public.png',
     },
     {
         value: 'students',
         label: 'Students',
         description: 'Learners seeking educational content',
+        image: '/students.png',
     },
     {
         value: 'professionals',
         label: 'Professionals',
         description: 'Individuals looking to enhance their skills',
+        image: '/professionals.png',
     },
     {
         value: 'educators',
         label: 'Educators',
         description: 'Teachers and trainers sharing knowledge',
+        image: '/educators.png',
     },
     {
         value: 'enthusiasts',
         label: 'Tech Enthusiasts',
         description: 'Fans of the latest technology trends',
+        image: '/enthusiasts.png',
     },
 ];
 
@@ -122,10 +128,18 @@ export function AudienceGoalsStep({
                     <div className='mt-3 p-3 bg-blue-50 rounded-lg'>
                         <h4 className='font-medium mb-2'>Audience Preview</h4>
                         <div className='flex items-center gap-3'>
-                            <img
-                                src='/placeholder-avatar.svg'
+                            <Image
+                                src={
+                                    audiencesOptions.find(
+                                        (audience) =>
+                                            audience.value ===
+                                            state.targetAudience
+                                    )?.image || '/placeholder-avatar.svg'
+                                }
+                                width={64}
+                                height={64}
                                 alt={state.targetAudience}
-                                className='w-15 h-15 rounded-full'
+                                className='rounded-full'
                             />
                             <div>
                                 <p className='font-medium capitalize'>

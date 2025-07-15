@@ -21,11 +21,12 @@ import {
     User,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import Image from 'next/image';
 
 export function DashboardNav() {
     const pathname = usePathname();
-    const {user, logout} = useAuth()
-    
+    const { user, logout } = useAuth();
+
     const handleLogout = () => {
         logout();
     };

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import type { VideoCreationState } from '@/types/video-creation';
 import { Wand2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface VideoStyleStepProps {
     state: VideoCreationState;
@@ -18,6 +19,7 @@ const styleOptions = [
         desc: 'Clean design with simple visuals',
         color: 'bg-gray-100',
         css: 'absolute bottom-2 left-2 w-8 h-1 bg-gray-400 rounded',
+        image: '/minimalist.jpg',
     },
     {
         id: 'dynamic',
@@ -25,6 +27,7 @@ const styleOptions = [
         desc: 'Energetic with motion graphics',
         color: 'bg-purple-100',
         css: 'absolute top-2 right-2 w-4 h-4 bg-purple-400 rounded-full animate-pulse',
+        image: '/dynamic.jpg',
     },
     {
         id: 'educational',
@@ -32,6 +35,7 @@ const styleOptions = [
         desc: 'Focus on clarity and information',
         color: 'bg-blue-100',
         css: 'absolute bottom-2 left-2 text-xs bg-blue-200 px-2 py-1 rounded',
+        image: '/educational.jpg',
     },
     {
         id: 'storytelling',
@@ -39,6 +43,7 @@ const styleOptions = [
         desc: 'Narrative-focused with emotional appeal',
         color: 'bg-green-100',
         css: 'absolute bottom-2 right-2 w-6 h-1 bg-green-400 rounded',
+        image: '/storytelling.jpg',
     },
 ];
 
@@ -73,11 +78,12 @@ export function VideoStyleStep({
                                 <div
                                     className={`w-full aspect-video ${style.color} flex items-center justify-center rounded-md relative overflow-hidden`}
                                 >
-                                    <div className='absolute inset-0 flex items-center justify-center'>
-                                        <div className='text-xs font-medium text-gray-600'>
-                                            {style.name} Preview
-                                        </div>
-                                    </div>
+                                    <Image
+                                        src={style.image}
+                                        alt={style.name}
+                                        layout='fill'
+                                        objectFit='cover'
+                                    />
                                     <div className={style.css}></div>
                                 </div>
                                 <span className='font-medium'>
