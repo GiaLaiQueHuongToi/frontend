@@ -362,14 +362,6 @@ export function VideoGenerationStep({
                                     <Download className='h-4 w-4' />
                                     Download MP4
                                 </Button>
-                                <Button
-                                    onClick={() =>
-                                        onFinish(videoBlob || undefined)
-                                    }
-                                    className='gap-2'
-                                >
-                                    Complete Project
-                                </Button>
                             </div>
                         </div>
                     )}
